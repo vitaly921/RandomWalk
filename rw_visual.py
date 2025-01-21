@@ -2,12 +2,22 @@ import matplotlib.pyplot as plt
 import math
 import tkinter as tk
 from tkinter import ttk
+import matplotlib.animation as animation
 
+import random_walk
 from random_walk import RandomWalk
 
 # Задание бесконечного цикла
 #while True:
 def build_graphs():
+    """"""
+    if mode_var.get() == 'static':
+        build_static_graph()
+    else:
+        build_animation()
+
+
+def build_static_graph():
     """"""
     plt.close('all')
     # Создание экземпляра с регулируемой длин ой списка координат точек
@@ -58,6 +68,45 @@ def build_graphs():
     #if keep_running == 'n':
     #    break
 
+
+def build_animation():
+    """"""
+    plt.close('all')
+    rw = RandomWalk(5000)
+    rw.fill_walk()
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
+    ax.set_ylim(min(rw.y_values) - 1, max(rw.y_values) + 1)
+
+    if line_var.get():
+        point, = ax.plot(rw.x_values[0], rw.y_values[0], 'bo')
+        line, = ax.plot([],[], 'b-')
+    if points_var.get():
+        points, = ax.plot([], [], 'ro', markersize=1)
+
+    def init():
+        """"""
+        if line_var.get():
+            point.set_data([],[])
+            line.set_data([],[])
+        if points_var.get():
+            points.set_data([],[])
+        return (point, line, points) if line_var.get() and points_var.get() else (line,) if line_var.get() else (points,)
+
+    def update(frame):
+        """"""
+        if line_var.get():
+            point.set_data(rw.x_values[frame], rw.y_values[frame])
+            line.set_data(rw.x_values[:frame+1], rw.y_values[:frame+1])
+        if points_var.get():
+            points.set_data(rw.x_values[:frame+1], rw.y_values[:frame+1])
+        return (point, line, points) if line_var.get() and points_var.get() else (line,) if line_var.get() else (points,)
+
+    ani = animation.FuncAnimation(fig, update, frames = len(rw.x_values), init_func=init, blit=True, interval=0)
+    plt.title('Animation random walk')
+    plt.show()
+
 def update_button_state():
     """"""
     if line_var.get() or points_var.get():
@@ -77,6 +126,14 @@ line_check = ttk.Checkbutton(root, text='Graphic line', variable= line_var, comm
 line_check.pack(pady=5)
 points_check = ttk.Checkbutton(root, text='Graphic points', variable=points_var, command=update_button_state)
 points_check.pack(pady=10)
+
+mode_var = tk.StringVar(value='static')
+#
+static_radio = ttk.Radiobutton(root, text="Static", variable=mode_var, value='static')
+static_radio.pack(pady=5)
+
+animation_radio = ttk.Radiobutton(root, text='Animation', variable=mode_var, value='animation')
+animation_radio.pack(pady=5)
 
 button = ttk.Button(root, text = "Create New", command=build_graphs, state=tk.NORMAL)
 button.pack(side='bottom', pady=10)
