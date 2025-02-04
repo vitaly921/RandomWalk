@@ -173,10 +173,29 @@ def update_button_state(event="<Key>"):
         button.config(state=tk.DISABLED)
 
 
+def update_settings():
+    """"""
+    for key in frames:
+        frames[key].pack_forget()
+        labels[key].pack_forget()
+
+    is_static = (mode_var.get()=="static")
+    is_points = points_var.get()
+    is_lines = line_var.get()
+
+    # Определяем нужный ключ для выбора фрейма
+    key = ('static' if is_static else 'animation')
+    key += ('_points' if is_points else '') + ('_lines' if is_lines else '')
+
+    if key in frames:
+        print('Here')
+        labels[key].pack(anchor="nw", pady=(10, 0))  # Показываем заголовок
+        frames[key].pack(anchor="nw", fill="x", padx=5)  # Показываем фрейм
+
 
 root = tk.Tk()
 root.title("Случайное блуждание")
-root.geometry("400x450+100+100")
+root.geometry("500x750+100+100")
 root.resizable(False, False)
 
 ttk.Label(root, text='Settings Random Walk', font=("Arial", 14)).pack(pady=2)
@@ -202,9 +221,12 @@ max_step_entry.pack(anchor="nw")
 ttk.Label(root, text='Вид графика', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
 frame = ttk.Frame(borderwidth=1, relief=SOLID, padding=[8, 10])
 frame.pack(anchor="nw", fill="x", padx=5)
+
+
 line_var = tk.BooleanVar(value=True)
 points_var = tk.BooleanVar(value=True)
-
+line_var.trace_add("write", lambda *args: update_settings())
+points_var.trace_add("write", lambda *args: update_settings())
 
 line_check = ttk.Checkbutton(frame, text='Graphic line', variable= line_var, command=update_button_state)
 line_check.pack(side="left", padx=5)
@@ -215,7 +237,10 @@ points_check.pack(side="left", padx=5)
 ttk.Label(root, text='Способ отображения', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
 frame = ttk.Frame(borderwidth=1, relief=SOLID, padding=[8, 10])
 frame.pack(anchor="nw", fill="x", padx=5)
+
 mode_var = tk.StringVar(value='static')
+mode_var.trace_add("write", lambda *args:update_settings())
+
 #
 static_radio = ttk.Radiobutton(frame, text="Static", variable=mode_var, value='static')
 static_radio.pack(side="left", padx=5)
@@ -224,6 +249,83 @@ animation_radio = ttk.Radiobutton(frame, text='Animation', variable=mode_var, va
 animation_radio.pack(side="left", padx=5)
 
 count_points_entry.bind_all("<Key>", update_button_state)
+
+
+
+
+# --- Создание фреймов и заголовков ---
+frames = {}
+labels = {}
+
+def create_settings_frame(title, has_points=True, has_lines=True):
+    """Функция создания динамических фреймов дополнительной настройки вида графиков"""
+
+    label = ttk.Label(root, text=title, font=("Arial", 8))
+    label.pack(pady=(10, 0))
+
+    frame = ttk.Frame(root, borderwidth=1, relief=SOLID, padding=[8, 10])
+
+    def toggle_colormap():
+        """"""
+        if colormap_var.get():
+            colormap_combobox.config(state="readonly")
+            color_combobox.config(state="disabled")
+        else:
+            colormap_combobox.config(state="disabled")
+            color_combobox.config(state="normal")
+
+    if has_points:
+
+        colormap_var = tk.BooleanVar(value=False)
+        colormap_check = ttk.Checkbutton(frame, text="Colormap", variable=colormap_var, command=toggle_colormap)
+        colormap_check.grid(row=0, column=0, sticky="w", padx=5, pady=2)
+
+        ttk.Label(frame, text="Выбор карты: ").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        colormap_combobox = ttk.Combobox(frame, values=['Jet', 'Blues', 'Viridis', 'Plasma'], state='disabled',
+                                         width=10)
+        colormap_combobox.grid(row=1, column=1, sticky="w")
+
+        ttk.Label(frame, text="Цвет точек: ").grid(row=1, column=2, sticky="w", padx=5, pady=2)
+        color_combobox = ttk.Combobox(frame, values=['red', 'blue', 'black'], state="readonly", width=7)
+        color_combobox.grid(row=1, column=3, sticky="w")
+
+        ttk.Label(frame, text="Размер точек: ").grid(row=2, column=0, sticky="w", padx=5, pady=2)
+        #ttk.Entry(frame, width=10).grid(row=2, column=1, sticky="w")
+        point_count = tk.Spinbox(frame, from_=1, to=20, width=10)
+        point_count.grid(row=2, column=1, sticky="w")
+        #point_count.set(1)
+
+
+
+
+
+
+
+
+
+    if has_lines:
+        ttk.Label(frame, text="Цвет линий: ").grid(row=3, column=0, sticky="w", padx=5, pady=2)
+        ttk.Entry(frame, width=10).grid(row=3, column=1, sticky="w")
+        ttk.Label(frame, text="Ширина линий: ").grid(row=4, column=0, sticky="w", padx=5, pady=2)
+        ttk.Entry(frame, width=10).grid(row=4, column=1, sticky="w")
+
+    return label, frame
+
+
+# Добавляем все возможные комбинации в словари `frames` и `labels`
+options = [
+    ("static_points", "Настройки статических точек", True, False),
+    ("static_lines", "Настройки статических линий", False, True),
+    ("static_points_lines", "Настройки статических точек и линий", True, True),
+    ("animation_points", "Настройки анимационных точек", True, False),
+    ("animation_lines", "Настройки анимационных линий", False, True),
+    ("animation_points_lines", "Настройки анимационных точек и линий", True, True),
+]
+
+for key, title, has_points, has_lines in options:
+    labels[key], frames[key] = create_settings_frame(title, has_points, has_lines)
+
+update_settings()
 
 root.mainloop()
 
