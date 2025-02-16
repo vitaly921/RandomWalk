@@ -37,12 +37,17 @@ def build_static_graph():
     # Определение расстояния между первой и последней точками
     distance = math.sqrt((rw.x_values[-1] - rw.x_values[0]) ** 2 + (rw.y_values[-1] - rw.y_values[0]) ** 2)
 
+    global points_size_var
+
     # Если выбран точечный график
     if points_var.get():
+
+        size_points = int(points_size_var.get())
+        print(size_points)
         # Задание размера окна графика точек блуждания
         plt.figure(figsize=(9, 5))
         # Создание точечной диаграммы с вычисленными точками для X,Y
-        plt.scatter(rw.x_values, rw.y_values, c=point_numbers, cmap=plt.cm.Greys, edgecolors='none', s=20)
+        plt.scatter(rw.x_values, rw.y_values, c=point_numbers, cmap=plt.cm.Greys, edgecolors='none', s=size_points)
 
         # Отрисовка увеличенных начальной и конечной точек блуждания
         plt.scatter(0, 0, c='green', edgecolors='none', s=100)
@@ -53,6 +58,7 @@ def build_static_graph():
         # Отрисовка информации о расстоянии между начальной и конечной точками
         plt.text(0.5, -0.1, f'Расстояние между точками блуждания: {distance:.2f}', fontsize=12, ha='center',
                  va='center', transform=plt.gca().transAxes)
+
 
     # Если выбран линейный график
     if line_var.get():
@@ -91,6 +97,11 @@ def build_animation():
     rw = RandomWalk(count_points, max_step)
     # Заполнение списка координатами
     rw.fill_walk()
+    global points_size_var
+
+
+    repeat_animation = repeat_var.get()
+    print(repeat_animation)
 
     # Если выбрана анимация линий
     if line_var.get():
@@ -122,34 +133,36 @@ def build_animation():
 
         # Управление анимацией
         animation_line = animation.FuncAnimation(fig, update_line, frames=len(rw.x_values), init_func=init_line, blit=
-                                                 True, interval=0)
+                                                 True, interval=0, repeat=repeat_animation)
         # Установка заголовка для окна с анимацией
         plt.title("Анимация линий")
 
     # Если выбрана анимация точек
     if points_var.get():
+        size_points = int(points_size_var.get())
         # Создание окна графика и осей
         fig, ax = plt.subplots(figsize=(8, 6))
         # Установка границ осей
         ax.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
         ax.set_ylim(min(rw.y_values) - 1, max(rw.y_values) + 1)
         # Создание начальной точки
-        points, = ax.plot([], [], 'ro', markersize=1)
+        #points, = ax.plot([], [], 'ro', markersize=(size_points**0.5))
+        points = ax.scatter([], [], s=size_points, color='red')
 
         def init_points():
             """Функция инициализации"""
             # Установка пустых кадров для точек
-            points.set_data([],[])
+            points.set_offsets([])
             return points,
 
         def update_points(frame):
             """Функция обновления"""
             # Обновление вида точек от начала и до текущего кадра
-            points.set_data(rw.x_values[:frame+1], rw.y_values[:frame+1])
+            points.set_offsets([[x, y] for x, y in zip(rw.x_values[:frame+1], rw.y_values[:frame+1])])
             return points,
         # Управление анимацией
         animation_points = animation.FuncAnimation(fig, update_points, frames = len(rw.x_values),
-                                                   init_func=init_points, blit=True, interval=0)
+                                                   init_func=init_points, blit=True, interval=0, repeat=repeat_animation)
         # Установка заголовка для окна с анимацией
         plt.title('Анимация точек')
 
@@ -175,9 +188,13 @@ def update_button_state(event="<Key>"):
 
 def update_settings():
     """"""
+    # Скрытие старых фреймов и заголовков
     for key in frames:
         frames[key].pack_forget()
         labels[key].pack_forget()
+
+
+    #key = 'static' if mode_var.get()=='static' else 'animation'
 
     is_static = (mode_var.get()=="static")
     is_points = points_var.get()
@@ -188,10 +205,30 @@ def update_settings():
     key += ('_points' if is_points else '') + ('_lines' if is_lines else '')
 
     if key in frames:
-        print('Here')
+        #print('Here')
         labels[key].pack(anchor="nw", pady=(10, 0))  # Показываем заголовок
         frames[key].pack(anchor="nw", fill="x", padx=5)  # Показываем фрейм
 
+
+def validate_count_points(input_value):
+    """Проверка ввода значений в поле count points окна настроек"""
+    if input_value == "":  # Разрешаем пустое поле
+        return True
+    if input_value.isdigit():
+        num = int(input_value)
+        if 0 <= num <= 5000:
+            return True
+    return False
+
+def validate_max_step(input_value):
+    """Проверка ввода значений в поле max_step окна настроек"""
+    if input_value == "":  # Разрешаем пустое поле
+        return True
+    if input_value.isdigit():
+        num = int(input_value)
+        if 0 <= num <= 30:
+            return True
+    return False
 
 root = tk.Tk()
 root.title("Случайное блуждание")
@@ -207,14 +244,17 @@ frame.pack(anchor="nw", fill="x", padx=5)
 button = ttk.Button(root, text = "Create New", command=build_graphs, state=tk.DISABLED)
 button.pack(side='bottom', pady=10)
 
-ttk.Label(frame, text='Count points:').pack(side="left", padx=5)
-count_points_entry = ttk.Entry(frame)
-count_points_entry.pack(side="left", padx=5)
+
+vcmd = (root.register(validate_count_points), '%P')
+ttk.Label(frame, text='Count points:').grid(row=0, column=0, sticky='w', padx=5, pady=2)
+count_points_entry = ttk.Entry(frame, width=10, validate='key', validatecommand=vcmd)
+count_points_entry.grid(row=0, column=1, sticky='w', padx=2, pady=2)
 
 
-ttk.Label(frame, text='Max step:').pack(side="left", padx=5)
-max_step_entry = ttk.Entry(frame)
-max_step_entry.pack(anchor="nw")
+vcmd = (root.register(validate_max_step), '%P')
+ttk.Label(frame, text='Max step:').grid(row=0, column=2, sticky='w', padx=5, pady=2)
+max_step_entry = ttk.Entry(frame, width=5, validate='key', validatecommand=vcmd)
+max_step_entry.grid(row=0, column=3, sticky='w', padx=5, pady=2)
 
 
 
@@ -225,13 +265,14 @@ frame.pack(anchor="nw", fill="x", padx=5)
 
 line_var = tk.BooleanVar(value=True)
 points_var = tk.BooleanVar(value=True)
+
 line_var.trace_add("write", lambda *args: update_settings())
 points_var.trace_add("write", lambda *args: update_settings())
 
 line_check = ttk.Checkbutton(frame, text='Graphic line', variable= line_var, command=update_button_state)
-line_check.pack(side="left", padx=5)
+line_check.grid(row=0, column=0, sticky='w', padx=5, pady=2)
 points_check = ttk.Checkbutton(frame, text='Graphic points', variable=points_var, command=update_button_state)
-points_check.pack(side="left", padx=5)
+points_check.grid(row=0, column=1, sticky='w', padx=5, pady=2)
 
 
 ttk.Label(root, text='Способ отображения', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
@@ -243,10 +284,10 @@ mode_var.trace_add("write", lambda *args:update_settings())
 
 #
 static_radio = ttk.Radiobutton(frame, text="Static", variable=mode_var, value='static')
-static_radio.pack(side="left", padx=5)
+static_radio.grid(row=0, column=0, sticky='w', padx=5, pady=2)
 
 animation_radio = ttk.Radiobutton(frame, text='Animation', variable=mode_var, value='animation')
-animation_radio.pack(side="left", padx=5)
+animation_radio.grid(row=0, column=1, sticky='w', padx=5, pady=2)
 
 count_points_entry.bind_all("<Key>", update_button_state)
 
@@ -256,8 +297,10 @@ count_points_entry.bind_all("<Key>", update_button_state)
 # --- Создание фреймов и заголовков ---
 frames = {}
 labels = {}
+repeat_var = tk.BooleanVar(value=False)
+points_size_var = tk.IntVar(value=5)
 
-def create_settings_frame(title, has_points=True, has_lines=True):
+def create_settings_frame(title, is_animation=False, has_points=True, has_lines=True):
     """Функция создания динамических фреймов дополнительной настройки вида графиков"""
 
     label = ttk.Label(root, text=title, font=("Arial", 8))
@@ -274,36 +317,40 @@ def create_settings_frame(title, has_points=True, has_lines=True):
             colormap_combobox.config(state="disabled")
             color_combobox.config(state="normal")
 
+    print(f"Creating frame: {title}, is_animation={is_animation}")
+
+    if is_animation:
+        #print(is_animation)
+        global repeat_var
+        repeat_check = ttk.Checkbutton(frame, text="Repeat animation", variable=repeat_var)
+        repeat_check.grid(row=0, column=0, sticky='w', padx=5, pady=2)
+
     if has_points:
 
         colormap_var = tk.BooleanVar(value=False)
         colormap_check = ttk.Checkbutton(frame, text="Colormap", variable=colormap_var, command=toggle_colormap)
-        colormap_check.grid(row=0, column=0, sticky="w", padx=5, pady=2)
+        colormap_check.grid(row=1, column=0, sticky="w", padx=5, pady=2)
 
-        ttk.Label(frame, text="Выбор карты: ").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(frame, text="Выбор карты: ").grid(row=1, column=1, sticky="w", padx=5, pady=2)
         colormap_combobox = ttk.Combobox(frame, values=['Jet', 'Blues', 'Viridis', 'Plasma'], state='disabled',
                                          width=10)
-        colormap_combobox.grid(row=1, column=1, sticky="w")
+        colormap_combobox.grid(row=1, column=2, sticky="w")
 
-        ttk.Label(frame, text="Цвет точек: ").grid(row=1, column=2, sticky="w", padx=5, pady=2)
+        ttk.Label(frame, text="Цвет точек: ").grid(row=1, column=3, sticky="w", padx=5, pady=2)
         color_combobox = ttk.Combobox(frame, values=['red', 'blue', 'black'], state="readonly", width=7)
-        color_combobox.grid(row=1, column=3, sticky="w")
+        color_combobox.grid(row=1, column=4, sticky="w")
 
+        global points_size_var
         ttk.Label(frame, text="Размер точек: ").grid(row=2, column=0, sticky="w", padx=5, pady=2)
         #ttk.Entry(frame, width=10).grid(row=2, column=1, sticky="w")
-        point_count = tk.Spinbox(frame, from_=1, to=20, width=10)
-        point_count.grid(row=2, column=1, sticky="w")
+        points_size = tk.Spinbox(frame, from_=1, to=20, width=10, textvariable=points_size_var)
+        points_size.grid(row=2, column=1, sticky="w")
+        #print(points_size.get())
         #point_count.set(1)
 
 
-
-
-
-
-
-
-
     if has_lines:
+        #print('Hi')
         ttk.Label(frame, text="Цвет линий: ").grid(row=3, column=0, sticky="w", padx=5, pady=2)
         ttk.Entry(frame, width=10).grid(row=3, column=1, sticky="w")
         ttk.Label(frame, text="Ширина линий: ").grid(row=4, column=0, sticky="w", padx=5, pady=2)
@@ -314,16 +361,17 @@ def create_settings_frame(title, has_points=True, has_lines=True):
 
 # Добавляем все возможные комбинации в словари `frames` и `labels`
 options = [
-    ("static_points", "Настройки статических точек", True, False),
-    ("static_lines", "Настройки статических линий", False, True),
-    ("static_points_lines", "Настройки статических точек и линий", True, True),
-    ("animation_points", "Настройки анимационных точек", True, False),
-    ("animation_lines", "Настройки анимационных линий", False, True),
-    ("animation_points_lines", "Настройки анимационных точек и линий", True, True),
+    ("static_points", "Настройки статических точек", False, True, False),
+    ("static_lines", "Настройки статических линий", False, False, True),
+    ("static_points_lines", "Настройки статических точек и линий", False, True, True),
+    ("animation_points", "Настройки анимационных точек", True, True, False),
+    ("animation_lines", "Настройки анимационных линий", True, False, True),
+    ("animation_points_lines", "Настройки анимационных точек и линий", True, True, True),
 ]
 
-for key, title, has_points, has_lines in options:
-    labels[key], frames[key] = create_settings_frame(title, has_points, has_lines)
+for key, title, is_animation, has_points, has_lines in options:
+    #print(is_animation)
+    labels[key], frames[key] = create_settings_frame(title, is_animation, has_points, has_lines)
 
 update_settings()
 
