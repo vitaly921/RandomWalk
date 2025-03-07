@@ -3,6 +3,7 @@ import math
 import tkinter as tk
 from tkinter import ttk, SOLID
 import matplotlib.animation as animation
+#import numpy as np
 
 import random_walk
 from random_walk import RandomWalk
@@ -133,7 +134,7 @@ def build_animation():
             # Обновление вида линии от начала и до текущего кадра
             line.set_data(rw.x_values[:frame+1], rw.y_values[:frame+1])
             # Обновление вида точки на текущем кадре
-            current_point_for_lines.set_data(rw.x_values[frame], rw.y_values[frame])
+            current_point_for_lines.set_data([rw.x_values[frame]], [rw.y_values[frame]])
             # Возврат кортежей с объектами линий и точки
             return line, current_point_for_lines,
 
@@ -168,7 +169,7 @@ def build_animation():
             # Обновление вида точек от начала и до текущего кадра
             points.set_offsets([[x, y] for x, y in zip(rw.x_values[:frame+1], rw.y_values[:frame+1])])
             # Обновление вида точки на текущем кадре
-            current_point.set_data(rw.x_values[frame], rw.y_values[frame])
+            current_point.set_data([rw.x_values[frame]], [rw.y_values[frame]])
             return points, current_point,
         # Управление анимацией
         animation_points = animation.FuncAnimation(fig, update_points, frames = len(rw.x_values),
@@ -330,13 +331,14 @@ options = [
     ("animation_points_lines", "Настройки анимационных точек и линий", True, True, True),
 ]
 
+repeat_var = tk.BooleanVar(value=False)
+points_size_var = tk.IntVar(value=5)
 # Добавляем все возможные комбинации в словари `frames` и `labels` и вызываем функцию для создания всех возможных
 # комбинаций фреймов
 for key, title, is_animation, has_points, has_lines in options:
     labels[key], frames[key] = create_settings_frames(title, is_animation, has_points, has_lines)
 
-repeat_var = tk.BooleanVar(value=False)
-points_size_var = tk.IntVar(value=5)
+
 
 
 
