@@ -3,6 +3,7 @@ import math
 import tkinter as tk
 from tkinter import ttk, SOLID
 import matplotlib.animation as animation
+import matplotlib.colors as mcolors
 #import numpy as np
 
 import random_walk
@@ -29,6 +30,11 @@ def build_static_graph():
     max_step = int(max_step_entry.get())
     # Объявление глобальной переменной размера точек
     global points_size_var
+    #
+    global points_colormap_var
+    global points_color_var
+    global colormap_var
+
 
     # Создание экземпляра с регулируемой длиной списка координат точек
     rw = RandomWalk(count_points, max_step)
@@ -49,9 +55,18 @@ def build_static_graph():
 
         # Получение пользовательского значения размера точек
         size_points = int(points_size_var.get())
+        #
+        points_colormap = points_colormap_var.get()
+        points_color = points_color_var.get()
+        colormap_mode = colormap_var.get()
+
         # --- Разделение на цветовую карту и обычный цвет и их выбор пользователем
-        # Создание точечной диаграммы с вычисленными точками для X,Y
-        plt.scatter(rw.x_values, rw.y_values, c=point_numbers, cmap=plt.cm.Greys, edgecolors='none', s=size_points)
+        if colormap_mode:
+            # Создание точечной диаграммы с вычисленными точками для X,Y
+            plt.scatter(rw.x_values, rw.y_values, c=point_numbers, cmap=points_colormap, edgecolors='none', s=size_points)
+        else:
+            plt.scatter(rw.x_values, rw.y_values, c=points_color, edgecolors='none',
+                        s=size_points)
 
         # Отрисовка увеличенных начальной и конечной точек блуждания
         plt.scatter(0, 0, c='green', edgecolors='none', s=100)
@@ -104,7 +119,11 @@ def build_animation():
     rw = RandomWalk(count_points, max_step)
     # Заполнение списка координатами
     rw.fill_walk()
+    #
     global points_size_var
+    #
+    global points_colormap_var
+    global points_color_var
 
     # Переменная для хранения состояния чек-бокса повторения анимации
     repeat_animation = repeat_var.get()
@@ -146,7 +165,11 @@ def build_animation():
 
     # Если выбрана анимация точек
     if points_var.get():
+        #
         size_points = int(points_size_var.get())
+        #
+        points_colormap = points_colormap_var.get()
+        points_color = points_color_var.get()
         # Создание окна графика и осей
         fig, ax = plt.subplots(figsize=(8, 6))
         # Установка границ осей
@@ -154,7 +177,7 @@ def build_animation():
         ax.set_ylim(min(rw.y_values) - 1, max(rw.y_values) + 1)
         # Создание начальных точек
         #points, = ax.plot([], [], 'ro', markersize=(size_points**0.5))
-        points = ax.scatter([], [], s=size_points, color='blue')
+        points = ax.scatter([], [], s=size_points, color=points_color)
         current_point, = ax.plot(rw.x_values[0], rw.y_values[0], 'ro')
 
         def init_points():
@@ -230,20 +253,20 @@ def update_button_state(event="<Key>"):
 
 
 def update_settings_frame():
-    """Функция обновления фреймов с настройками в зависимости от выбора пользователя"""
+    """Функция подбора фреймов с настройками в зависимости от выбора пользователя"""
     # Скрытие старых фреймов и заголовков по умолчанию
     for key in frames:
         frames[key].pack_forget()
         labels[key].pack_forget()
 
-    # Создание флага состояния для кнопки Static (выбран ли пользователем этот RadioButton)
+    # Задание флага состояния для кнопки Static по-умолчанию
     is_static = (mode_var.get()=="static")
-    # Создание флага состояния для чек-бокса Graphic points (выбран ли пользователем этот CheckButton)
+    # Обновление флага состояния для чек-бокса Graphic points (выбран ли пользователем этот CheckButton)
     is_points = points_var.get()
-    # Создание флага состояния для чек-бокса Graphic line (выбран ли пользователем этот CheckButton)
+    # Обновление флага состояния для чек-бокса Graphic line (выбран ли пользователем этот CheckButton)
     is_lines = line_var.get()
 
-    # Определяем нужный ключ для выбора вида динамического фрейма с дополнительными настройками
+    # Подбор ключа для выбора вида динамического фрейма с дополнительными настройками
     key = ('static' if is_static else 'animation')
     key += ('_points' if is_points else '') + ('_lines' if is_lines else '')
 
@@ -254,10 +277,11 @@ def update_settings_frame():
 
 def create_settings_frames(title, is_animation=False, has_points=True, has_lines=True):
     """Функция создания динамических фреймов для дополнительной настройки графиков"""
-
+    # Создание заголовка фрейма
     label = ttk.Label(root, text=title, font=("Arial", 8))
     label.pack(pady=(10, 0))
 
+    # Создание фрейма
     frame = ttk.Frame(root, borderwidth=1, relief=SOLID, padding=[8, 10])
 
     def toggle_colormap():
@@ -271,43 +295,66 @@ def create_settings_frames(title, is_animation=False, has_points=True, has_lines
 
     print(f"Creating frame: {title}, is_animation={is_animation}")
 
+    # Если при создании фрейма параметр is_animation=True
     if is_animation:
-        #print(is_animation)
+        # Импорт переменной со значением для чек-бокса повтора анимации (по-умолчанию False)
         global repeat_var
+        # Отрисовка чек-бокса повтора анимации в выбранной части фрейма
         repeat_check = ttk.Checkbutton(frame, text="Repeating", variable=repeat_var)
-        repeat_check.grid(row=0, column=0, sticky='w', padx=5, pady=2)
+        repeat_check.grid(row=5, column=0, sticky='w', padx=5, pady=2)
 
+    # Если при создании фрейма параметр is_animation=False
+    if not is_animation:
+        pass
+
+    # Если при создании фрейма параметр has_points=True
     if has_points:
+        # Импорт переменной со значением размера точек от пользователя
+        global points_size_var
+        #
+        global points_colormap_var
+        global points_color_var
+        global colormap_var
+        # Импорт списка вариантов цветовых карт
+        colormaps = plt.colormaps()
+        # Импорт цветов
+        colors = list(mcolors.CSS4_COLORS)
 
-        colormap_var = tk.BooleanVar(value=False)
+
         colormap_check = ttk.Checkbutton(frame, text="Colormap", variable=colormap_var, command=toggle_colormap)
         colormap_check.grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        # Создание надписи для выбора цветовой карты
+        ttk.Label(frame, text="Выбор карты: ").grid(row=1, column=3, sticky="w", padx=5, pady=2)
+        # Создание выпадающего списка с вариантами цветовых карт с привязкой к переменной points_colormap_var
+        colormap_combobox = ttk.Combobox(frame, values=colormaps, state='disabled',
+                                         width=7, textvariable=points_colormap_var)
+        colormap_combobox.grid(row=1, column=4, sticky="w")
 
-        ttk.Label(frame, text="Выбор карты: ").grid(row=2, column=3, sticky="w", padx=5, pady=2)
-        colormap_combobox = ttk.Combobox(frame, values=['Jet', 'Blues', 'Viridis', 'Plasma'], state='disabled',
-                                         width=7)
-        colormap_combobox.grid(row=2, column=4, sticky="w")
+        # Создание надписи для выбора цвета точек
+        ttk.Label(frame, text="Цвет точек: ").grid(row=1, column=5, sticky="w", padx=5, pady=2)
+        # Создание выпадающего списка с вариантами цвета точек
+        color_combobox = ttk.Combobox(frame, values=colors, state="readonly", width=7, textvariable=points_color_var)
+        color_combobox.grid(row=1, column=6, sticky="w")
 
-        ttk.Label(frame, text="Цвет точек: ").grid(row=2, column=5, sticky="w", padx=5, pady=2)
-        color_combobox = ttk.Combobox(frame, values=['red', 'blue', 'black'], state="readonly", width=7)
-        color_combobox.grid(row=2, column=6, sticky="w")
-
-        global points_size_var
+        # Создание надписи для задания размера точек
         ttk.Label(frame, text="Размер точек: ").grid(row=2, column=0, sticky="w", padx=5, pady=2)
         #ttk.Entry(frame, width=10).grid(row=2, column=1, sticky="w")
+        # Создание переключателя значений размера точек
         points_size = tk.Spinbox(frame, from_=1, to=20, width=5, textvariable=points_size_var)
         points_size.grid(row=2, column=1, sticky="w")
         #print(points_size.get())
         #point_count.set(1)
 
-
+    # Если при создании фрейма параметр has_lines=True
     if has_lines:
-        #print('Hi')
+        # Создание надписи для цвета линии
         ttk.Label(frame, text="Цвет линий: ").grid(row=3, column=0, sticky="w", padx=5, pady=2)
         ttk.Entry(frame, width=10).grid(row=3, column=1, sticky="w")
+
+        # Создание надписи для ширины линии
         ttk.Label(frame, text="Ширина линий: ").grid(row=4, column=0, sticky="w", padx=5, pady=2)
         ttk.Entry(frame, width=10).grid(row=4, column=1, sticky="w")
-
+    # Возврат всех динамических фреймов
     return label, frame
 
 
@@ -331,15 +378,20 @@ options = [
     ("animation_points_lines", "Настройки анимационных точек и линий", True, True, True),
 ]
 
+# Создание булевой переменной повтора анимации со значением False
 repeat_var = tk.BooleanVar(value=False)
+# Создание целочисленной переменной размера точек со значением по-умолчанию
 points_size_var = tk.IntVar(value=5)
+#
+points_colormap_var = tk.StringVar(value="Greys")
+points_color_var = tk.StringVar(value="blue")
+# Создание чек-бокса цветовой карты
+colormap_var = tk.BooleanVar(value=False)
+
 # Добавляем все возможные комбинации в словари `frames` и `labels` и вызываем функцию для создания всех возможных
 # комбинаций фреймов
 for key, title, is_animation, has_points, has_lines in options:
     labels[key], frames[key] = create_settings_frames(title, is_animation, has_points, has_lines)
-
-
-
 
 
 # Создание надписи на главном окне
@@ -348,6 +400,7 @@ ttk.Label(root, text='Settings Random Walk', font=("Arial", 14)).pack(pady=2)
 
 # Блок создания фрейма для наполнения числовыми данными
 #-----------------------------------------------------------------------------------------------------------------------
+# Создание надписи для фрейма
 ttk.Label(root, text='Задание числовых данных', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
 frame = ttk.Frame(borderwidth=1, relief=SOLID, padding=[8, 10])
 frame.pack(anchor="nw", fill="x", padx=5)
@@ -359,6 +412,8 @@ ttk.Label(frame, text='Count points:').grid(row=0, column=0, sticky='w', padx=5,
 # Создание поля Counts points для ввода пользователем значения
 count_points_entry = ttk.Entry(frame, width=10, validate='key', validatecommand=vcmd)
 count_points_entry.grid(row=0, column=1, sticky='w', padx=2, pady=2)
+# Привязка события нажатия клавиши в поле ввода Count Points для обновления состояния кнопки Create new
+count_points_entry.bind_all("<Key>", update_button_state)
 
 # Создание команды для валидации значений для поля Max step
 vcmd = (root.register(validate_max_step), '%P')
@@ -367,14 +422,12 @@ ttk.Label(frame, text='Max step:').grid(row=0, column=2, sticky='w', padx=5, pad
 # Создание поля Max step для ввода пользователем значения
 max_step_entry = ttk.Entry(frame, width=5, validate='key', validatecommand=vcmd)
 max_step_entry.grid(row=0, column=3, sticky='w', padx=5, pady=2)
+# Привязка события нажатия клавиши в поле ввода Max Step для обновления состояния кнопки Create new
+max_step_entry.bind_all("<Key>", update_button_state)
 
 
 # Блок создания фрейма для выбора вида графика
 #-----------------------------------------------------------------------------------------------------------------------
-ttk.Label(root, text='Вид графика', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
-frame = ttk.Frame(borderwidth=1, relief=SOLID, padding=[8, 10])
-frame.pack(anchor="nw", fill="x", padx=5)
-
 # Переменные-флаги в значении True (выбраны по умолчанию два вида представления)
 line_var = tk.BooleanVar(value=True)
 points_var = tk.BooleanVar(value=True)
@@ -384,6 +437,11 @@ points_var = tk.BooleanVar(value=True)
 line_var.trace_add("write", lambda *args: update_settings_frame())
 points_var.trace_add("write", lambda *args: update_settings_frame())
 
+# Создание надписи для фрейма
+ttk.Label(root, text='Вид графика', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
+frame = ttk.Frame(borderwidth=1, relief=SOLID, padding=[8, 10])
+frame.pack(anchor="nw", fill="x", padx=5)
+
 # Создание кнопок для выбора вида графика и их привязка к переменным и командам
 line_check = ttk.Checkbutton(frame, text='Graphic line', variable= line_var, command=update_button_state)
 line_check.grid(row=0, column=0, sticky='w', padx=5, pady=2)
@@ -391,29 +449,28 @@ points_check = ttk.Checkbutton(frame, text='Graphic points', variable=points_var
 points_check.grid(row=0, column=1, sticky='w', padx=5, pady=2)
 
 
-# Создание кнопки для начала построения графиков
-button = ttk.Button(root, text = "Create New", command=build_graphs, state=tk.DISABLED)
-button.pack(side='bottom', pady=10)
+# Блок создания фрейма для выбора способа отображения графика
+#-----------------------------------------------------------------------------------------------------------------------
+# Создание переменной со значением static
+mode_var = tk.StringVar(value='static')
+# Отслеживание изменения в переменной mode_var и при их возникновении вызов лямбда-функции
+mode_var.trace_add("write", lambda *args:update_settings_frame())
 
-
-
-
+# Создание надписи для фрейма
 ttk.Label(root, text='Способ отображения', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
 frame = ttk.Frame(borderwidth=1, relief=SOLID, padding=[8, 10])
 frame.pack(anchor="nw", fill="x", padx=5)
 
-mode_var = tk.StringVar(value='static')
-mode_var.trace_add("write", lambda *args:update_settings_frame())
-
-#
+# Создание кнопки с текстом Static с привязкой к переменной mode_var
 static_radio = ttk.Radiobutton(frame, text="Static", variable=mode_var, value='static')
 static_radio.grid(row=0, column=0, sticky='w', padx=5, pady=2)
-
+# Создание кнопки с текстом Animation с привязкой к переменной mode_var
 animation_radio = ttk.Radiobutton(frame, text='Animation', variable=mode_var, value='animation')
 animation_radio.grid(row=0, column=1, sticky='w', padx=5, pady=2)
 
-count_points_entry.bind_all("<Key>", update_button_state)
-
+# Создание кнопки для начала построения графиков
+button = ttk.Button(root, text = "Create New", command=build_graphs, state=tk.DISABLED)
+button.pack(side='bottom', pady=10)
 
 
 # Динамическое отображение нужного дополнительного фрейма в зависимости от выбора пользователя
