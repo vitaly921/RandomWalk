@@ -175,7 +175,7 @@ def build_animation():
         # Установка границ осей
         ax.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
         ax.set_ylim(min(rw.y_values) - 1, max(rw.y_values) + 1)
-        # Создание начальных точек
+        # Создание начальных точе
         #points, = ax.plot([], [], 'ro', markersize=(size_points**0.5))
         points = ax.scatter([], [], s=size_points, color=points_color)
         current_point, = ax.plot(rw.x_values[0], rw.y_values[0], 'ro')
