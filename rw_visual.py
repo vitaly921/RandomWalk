@@ -151,26 +151,42 @@ def build_animation():
         # Создание начальной точки и линии
         current_point_for_lines, = ax.plot(rw.x_values[0], rw.y_values[0], 'ro')
         line, = ax.plot([], [], c=line_color, linewidth=line_size)
+        # Отрисовка увеличенных начальной и конечной точек блуждания
+        start_point_for_line = plt.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=2)
+        end_point_for_line = plt.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder=2)
+        # Отрисовка линии между начальной и конечной точками
+        distance_line, = ax.plot([],[], c='red', linestyle='--', linewidth=3,
+                 label='Line between points')
+
 
         def init_line():
             """Функция инициализации"""
             # Установка пустых кадров для линий и точки
             line.set_data([],[])
             current_point_for_lines.set_data([], [])
+            distance_line.set_data([], [])
+            start_point_for_line.set_offsets([])
+            end_point_for_line.set_offsets([])
             # Возврат кортежей с объектами линий и точки
-            return line, current_point_for_lines,
+            return line, current_point_for_lines, distance_line, start_point_for_line, end_point_for_line
 
-        def update_line(frame):
-            """Функция обновления"""
-            # Обновление вида линии от начала и до текущего кадра
-            line.set_data(rw.x_values[:frame+1], rw.y_values[:frame+1])
-            # Обновление вида точки на текущем кадре
-            current_point_for_lines.set_data([rw.x_values[frame]], [rw.y_values[frame]])
-            # Возврат кортежей с объектами линий и точки
-            return line, current_point_for_lines,
+        def create_update_line_function(repeat_animation):
+            def update_line(frame):
+                """Функция обновления"""
+                # Обновление вида линии от начала и до текущего кадра
+                line.set_data(rw.x_values[:frame+1], rw.y_values[:frame+1])
+                # Обновление вида точки на текущем кадре
+                current_point_for_lines.set_data([rw.x_values[frame]], [rw.y_values[frame]])
 
+                if not repeat_animation and frame == len(rw.x_values)-1:
+                    distance_line.set_data([0, rw.x_values[-1]], [0, rw.y_values[-1]])
+                    start_point_for_line.set_offsets([0,0])
+                    end_point_for_line.set_offsets([[rw.x_values[-1], rw.y_values[-1]]])
+                # Возврат кортежей с объектами линий и точки
+                return line, current_point_for_lines, distance_line, start_point_for_line, end_point_for_line
+            return update_line
         # Управление анимацией
-        animation_line = animation.FuncAnimation(fig, update_line, frames=len(rw.x_values), init_func=init_line, blit=
+        animation_line = animation.FuncAnimation(fig, create_update_line_function(repeat_animation), frames=len(rw.x_values), init_func=init_line, blit=
                                                  True, interval=0, repeat=repeat_animation)
         # Установка заголовка для окна с анимацией
         plt.title("Анимация линий")
@@ -196,6 +212,12 @@ def build_animation():
         # Создание начальных точек
         #points, = ax.plot([], [], 'ro', markersize=(size_points**0.5))
         current_point, = ax.plot(rw.x_values[0], rw.y_values[0], 'ro')
+        # Отрисовка увеличенных начальной и конечной точек блуждания
+        start_point = plt.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=2)
+        end_point = plt.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder=2)
+        # Отрисовка линии между начальной и конечной точками
+        distance_line_for_points_graph, = ax.plot([],[], c='red', linestyle='--', linewidth=3,
+                 label='Line between points')
 
         # Обработка случая отображения с цветовой картой
         if colormap_mode:
@@ -212,21 +234,32 @@ def build_animation():
             if colormap_mode:
                 points.set_array([])
             current_point.set_data([], [])
-            return points, current_point,
+            distance_line_for_points_graph.set_data([], [])
+            start_point.set_offsets([])
+            end_point.set_offsets([])
+            return points, current_point, distance_line_for_points_graph, start_point, end_point
 
-        def update_points(frame):
-            """Функция обновления"""
-            # Обновление вида точек от начала и до текущего кадра
-            #points.set_offsets([[x, y] for x, y in zip(rw.x_values[:frame+1], rw.y_values[:frame+1])])
-            points.set_offsets(np.column_stack((rw.x_values[:frame+1], rw.y_values[:frame+1])))
-            # Для случая отображения с цветовой картой
-            if colormap_mode:
-                points.set_array(np.array(point_numbers[:frame+1]))
-            # Обновление вида точки на текущем кадре
-            current_point.set_data([rw.x_values[frame]], [rw.y_values[frame]])
-            return points, current_point,
-        # Управление анимацией
-        animation_points = animation.FuncAnimation(fig, update_points, frames = len(rw.x_values),
+        def update_create_point_function(repeat_animation):
+            def update_points(frame):
+                """Функция обновления"""
+                # Обновление вида точек от начала и до текущего кадра
+                #points.set_offsets([[x, y] for x, y in zip(rw.x_values[:frame+1], rw.y_values[:frame+1])])
+                points.set_offsets(np.column_stack((rw.x_values[:frame+1], rw.y_values[:frame+1])))
+                # Для случая отображения с цветовой картой
+                if colormap_mode:
+                    points.set_array(np.array(point_numbers[:frame+1]))
+                # Обновление вида точки на текущем кадре
+                current_point.set_data([rw.x_values[frame]], [rw.y_values[frame]])
+
+                if not repeat_animation and frame == len(rw.x_values)-1:
+                    distance_line_for_points_graph.set_data([0, rw.x_values[-1]], [0, rw.y_values[-1]])
+                    start_point.set_offsets([[0,0]])
+                    end_point.set_offsets([[rw.x_values[-1], rw.y_values[-1]]])
+                return points, current_point, distance_line_for_points_graph, start_point, end_point
+
+            return update_points
+            # Управление анимацией
+        animation_points = animation.FuncAnimation(fig, update_create_point_function(repeat_animation), frames = len(rw.x_values),
                                                    init_func=init_points, blit=True, interval=0, repeat=repeat_animation)
         # Установка заголовка для окна с анимацией
         plt.title('Анимация точек')
