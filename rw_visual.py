@@ -344,6 +344,7 @@ def update_settings_frame():
     if key in frames:
         labels[key].pack(anchor="nw", pady=(10, 0))      # Показываем заголовок
         frames[key].pack(anchor="nw", fill="x", padx=5)  # Показываем фрейм
+        metrics_var.set(False)
 
     # Для случая выбора статичного отображения графика(-ов)
     if mode_var.get()=="static":
@@ -368,6 +369,11 @@ def create_settings_frames(title, is_animation=False, has_points=True, has_lines
     # Создание фрейма
     frame = ttk.Frame(root, borderwidth=1, relief=SOLID, padding=[8, 10])
 
+    # Создание динамического фрейма для дополнительных метрик
+    metrics_label = ttk.Label(root, text="Выбор дополнительных метрик", font=("Arial", 8))
+    metrics_frame = ttk.Frame(root, borderwidth=1, relief=SOLID, padding=[8, 10])
+    text_label = ttk.Label(metrics_frame, text="[Здесь будет выбор метрик с возможностью отображения на графике]")
+
     def toggle_colormap():
         """Обработка события выбора чек-бокса с цветовыми картами"""
         # Если чек-бокс выбран, то кнопка выбора цветовой карт активна, а выбора простого цвета НЕ активна
@@ -378,6 +384,26 @@ def create_settings_frames(title, is_animation=False, has_points=True, has_lines
         else:
             colormap_combobox.config(state="disabled")
             color_combobox.config(state="normal")
+
+    def toggle_metrics_frame():
+        """"""
+        if metrics_var.get():
+            metrics_label.pack(anchor='w', fill='x', pady=(10, 0))
+            metrics_frame.pack(anchor="nw", fill="x", padx=5)
+
+            text_label.pack(pady=(10, 0))
+            line_check.config(state='disabled')
+            points_check.config(state='disabled')
+            static_radio.config(state='disabled')
+            animation_radio.config(state='disabled')
+        else:
+            metrics_frame.pack_forget()
+            metrics_label.pack_forget()
+            text_label.pack_forget()
+            line_check.config(state='normal')
+            points_check.config(state='normal')
+            static_radio.config(state='normal')
+            animation_radio.config(state='normal')
 
     #print(f"Creating frame: {title}, is_animation={is_animation}")
 
@@ -429,6 +455,12 @@ def create_settings_frames(title, is_animation=False, has_points=True, has_lines
         # Создание надписи для ширины линии
         ttk.Label(frame, text="Ширина линий: ").grid(row=3, column=2, sticky="w", padx=5, pady=2)
         tk.Spinbox(frame, from_=1, to=20 ,width=5, state="readonly", textvariable=line_size_var).grid(row=3, column=3, sticky="w")
+
+    # Создание чек-бокса с возможностью подсчёта метрик
+    style = ttk.Style()
+    style.configure("Bold.TCheckbutton", font=("TLabel", 9, "bold"))
+    check_metrics = ttk.Checkbutton(frame, text="Additional metrics", variable=metrics_var, command=toggle_metrics_frame, style="Bold.TCheckbutton")
+    check_metrics.grid(row=4, column=0, sticky="w", padx=5, pady=2)
     # Возврат всех динамических фреймов
     return label, frame
 
@@ -468,8 +500,11 @@ line_color_var = tk.StringVar(value="blue")
 max_step_var = tk.IntVar(value=5)
 # Создание целочисленной переменной со значением кол-ва точек
 count_points_var = tk.IntVar(value=500)
-# Создание чек-бокса цветовой карты
+# Создание переменной для чек-бокса цветовой карты
 colormap_var = tk.BooleanVar(value=False)
+# Создание переменной для чек-бокса дополнительных метрик
+metrics_var = tk.BooleanVar(value=False)
+
 
 # Добавляем все возможные комбинации в словари `frames` и `labels` и вызываем функцию для создания всех возможных
 # комбинаций фреймов
