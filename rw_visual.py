@@ -315,7 +315,7 @@ def update_button_state(event="<Key>"):
         # В случае нахождения числа за пределами диапазона флаг в положении False
         entry_valid_max_step = False
 
-    # Если выбран хотя бы один чек-окс и введенное число в нужном диапазоне
+    # Если выбран хотя бы один чек-бокс и введенное число в нужном диапазоне
     if checkbox_selected and entry_valid_count_points and entry_valid_max_step:
         # Кнопка для построения графиков активна
         button.config(state=tk.NORMAL)
@@ -356,7 +356,7 @@ def update_settings_frame():
         repeat_check.config(state="normal")
 
 
-def create_settings_frames(title, is_animation=False, has_points=True, has_lines=True):
+def create_settings_frames(title, metrics_label, metrics_frame, is_animation=False, has_points=True, has_lines=True):
     """Функция создания динамических фреймов для дополнительной настройки графиков"""
     # Импорт цветов
     colors = list(mcolors.CSS4_COLORS)
@@ -387,45 +387,21 @@ def create_settings_frames(title, is_animation=False, has_points=True, has_lines
         if metrics_var.get():
             metrics_label.pack(anchor='w', fill='x', pady=(10, 0))
             metrics_frame.pack(anchor="nw", fill="x", padx=5)
-
-            ## Отображение чек-бокса расстояния между начальной и конечной точками
-            #checkbox_distance_enabled.grid(row=0, column=0, sticky="w", padx=(0,70))
-            ## Отображение чек-бокса отображения на графике расстояния между начальной и конечной точками
-            #checkbox_distance_show.grid(row=0, column=2, sticky="e")
-            #all_check_metrics.config(state='normal')
             # Становятся неактивны кнопки выбора графика и чек-боксы способов отображения
             line_check.config(state='disabled')
             points_check.config(state='disabled')
             static_radio.config(state='disabled')
             animation_radio.config(state='disabled')
+
         # Иначе фрейм с метриками скрыт
         else:
             metrics_frame.pack_forget()
             metrics_label.pack_forget()
-            #all_check_metrics.config(state='disabled')
-            #all_check_metrics_var.set(value=False)
             # Становятся активны кнопки выбора графика и чек-боксы способов отображения
             line_check.config(state='normal')
             points_check.config(state='normal')
             static_radio.config(state='normal')
             animation_radio.config(state='normal')
-
-    metrics_label, metrics_frame, metrics_dict = create_metrics_frame(root)
-    #def toggle_distance_show_checkbox():
-    #    """"""
-    #    if distance_enabled_var.get():
-    #        checkbox_distance_show.config(state='normal')
-    #    else:
-    #        checkbox_distance_show.config(state='disabled')
-#
-    ## Создание динамического фрейма для дополнительных метрик
-    #metrics_label = ttk.Label(root, text="Выбор дополнительных метрик", font=("Arial", 8))
-    #metrics_frame = ttk.Frame(root, borderwidth=1, relief=SOLID, padding=[8, 10])
-#
-    #checkbox_distance_enabled = ttk.Checkbutton(metrics_frame, text="Расстояние между точками",
-    #                                            variable=distance_enabled_var, command=toggle_distance_show_checkbox)
-    #checkbox_distance_show = ttk.Checkbutton(metrics_frame, text="Показать на графике", variable=distance_show_var )
-    #checkbox_distance_show.config(state='disabled')
 
     # print(f"Creating frame: {title}, is_animation={is_animation}")
 
@@ -435,10 +411,11 @@ def create_settings_frames(title, is_animation=False, has_points=True, has_lines
     #     global repeat_var
     #     # Отрисовка чек-бокса повтора анимации в выбранной части фрейма
     #     repeat_check = ttk.Checkbutton(frame, text="Repeating", variable=repeat_var)
-   #     repeat_check.grid(row=0, column=0, sticky='w', padx=5, pady=2)
-   #  Динамический фрейм для создания настроек статического изображения графиков
-   # if not is_animation:
-   #     pass
+    #     repeat_check.grid(row=0, column=0, sticky='w', padx=5, pady=2)
+
+    #  Динамический фрейм для создания настроек статического изображения графиков
+    # if not is_animation:
+    #     pass
 
 
     # Динамический фрейм для создания настроек точечного графика
@@ -461,7 +438,6 @@ def create_settings_frames(title, is_animation=False, has_points=True, has_lines
 
         # Создание надписи для задания размера точек
         ttk.Label(frame, text="Размер точек: ").grid(row=2, column=0, sticky="w", padx=5, pady=2)
-        #ttk.Entry(frame, width=10).grid(row=2, column=1, sticky="w")
         # Создание переключателя значений размера точек
         points_size = tk.Spinbox(frame, from_=1, to=100, width=5, state="readonly", textvariable=points_size_var)
         points_size.grid(row=2, column=1, sticky="w")
@@ -480,7 +456,7 @@ def create_settings_frames(title, is_animation=False, has_points=True, has_lines
 
     # Создание чек-бокса с возможностью подсчёта метрик и со своим стилем
     style = ttk.Style()
-    style.configure("Bold.TCheckbutton", font=("TLabel", 9, "bold"))
+    style.configure("Bold.TCheckbutton", font=("TLabel", 10, "bold"))
     check_metrics = ttk.Checkbutton(frame, text="Additional metrics", variable=metrics_var, command=toggle_metrics_frame, style="Bold.TCheckbutton")
     check_metrics.grid(row=4, column=0, sticky="w", padx=5, pady=2)
 
@@ -493,11 +469,13 @@ def create_settings_frames(title, is_animation=False, has_points=True, has_lines
 
 
 def create_metrics_frame(parent):
-    """"""
+    """Функция создания динамического окна с метриками"""
+    # Создание надписи для окна с метриками
     label = ttk.Label(parent, text="Выбор дополнительных метрик", font=("Arial", 8))
+    # Создание динамического фрейма для метрик
     frame = ttk.Frame(root, borderwidth=1, relief=SOLID, padding=[8, 10])
 
-    metrics_objects = []
+    # Создание списка с информацией о метриках:
     metrics_info = [
         ("Расстояние между точками", "distance"),
         ("Максимальное расстояние между точками", "max_distance"),
@@ -511,42 +489,40 @@ def create_metrics_frame(parent):
         ("Количество пересечений с начальной точкой","start_point_crossings"),
         ("Общее время движения","total_time"),
         ("Соотношение перемещения к длине пути","displacement_to_path_ratio"),
-
     ]
 
-    metric_vars = []
-    metric_show_vars = []
-    metric_show_checkboxes = []
+    # Создание пустого списка для объектов метрик
     metrics_object_list = []
 
-
+    # Для каждой метрики из списка
     for i, (label_text, key) in enumerate(metrics_info):
+        # Создание объекта метрики через класс
         metric = MetricCheckBox(frame, label_text, i)
-        metrics_objects.append((key, metric))
+        # Добавление объекта в список
         metrics_object_list.append(metric)
 
-        metric_vars.append(metric.enabled_var)
-        metric_show_vars.append(metric.show_var)
-        metric_show_checkboxes.append(metric.checkbox_show)
-
     def toggle_all_metrics():
+        """Обработчик включения чек-бокса "Выбрать всё" """
+        # Получение булевого значения переменной-состояния чек-бокса "Выбрать всё"
         all_selected = bool(all_check_metrics_var.get())
-        print("Toggle:", all_selected)
+        #print("Toggle:", all_selected)
+        # Для каждого объекта метрики из списка обновить состояние для чек-боксов
         for metric in metrics_object_list:
             metric.update_states(enable=all_selected, show=all_selected)
 
-    #all_check_metrics_var.trace_add("write", on_toggle_all_metrics)
+    # Создание переменной состояния для чек-бокса "Выбрать всё"
     all_check_metrics_var = tk.BooleanVar(value=False)
-    all_check_metrics = ttk.Checkbutton(frame, text="Check and show all metrics", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
-    all_check_metrics.grid(row=len(metrics_info), column=0, sticky="e", padx=5, pady=(10, 0), columnspan=2)
+    # Создание чек-бокса "Выбрать всё" и задание его расположения
+    all_check_metrics = ttk.Checkbutton(frame, text="Check and show all", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
+    all_check_metrics.grid(row=len(metrics_info), column=0, sticky="e", columnspan=3)
 
-    return label, frame, dict(metrics_objects)
+    return label, frame, list(metrics_object_list)
 
 
 # Создание главного окна
 root = tk.Tk()
 root.title("Случайное блуждание")
-root.geometry("500x750+100+100")
+root.geometry("500x780+100+100")
 root.resizable(False, False)
 
 # Создание пустых словарей фреймов с дополнительными настройками и заголовков для них
@@ -583,18 +559,15 @@ colormap_var = tk.BooleanVar(value=False)
 
 # Создание переменной для чек-бокса дополнительных метрик
 metrics_var = tk.BooleanVar(value=False)
-# Создание переменной чек-бокса для выбора всех метрик
-#all_check_metrics_var = tk.BooleanVar(value=False)
-## Создание переменной для чек-бокса подсчета дистанции между начальной и конечной точками
-#distance_enabled_var = tk.BooleanVar(value=False)
-## Создание переменной для чек-бокса отображения на графике дистанции между начальной и конечной точками
-#distance_show_var = tk.BooleanVar(value=False)
+
+# Создание дополнительного окна с метриками с помощью функции
+metrics_label, metrics_frame, metrics_list = create_metrics_frame(root)
 
 
 # Добавляем все возможные комбинации в словари `frames` и `labels` и вызываем функцию для создания всех возможных
 # комбинаций фреймов
 for key, title, is_animation, has_points, has_lines in options:
-    labels[key], frames[key] = create_settings_frames(title, is_animation, has_points, has_lines)
+    labels[key], frames[key] = create_settings_frames(title,metrics_label, metrics_frame, is_animation, has_points, has_lines)
 
 
 # Создание надписи на главном окне
