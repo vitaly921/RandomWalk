@@ -474,32 +474,48 @@ def create_metrics_frame(parent):
     label = ttk.Label(parent, text="Выбор дополнительных метрик", font=("Arial", 8))
     # Создание динамического фрейма для метрик
     frame = ttk.Frame(root, borderwidth=1, relief=SOLID, padding=[8, 10])
+    # Создание переменной состояния для чек-бокса "Выбрать всё" для метрик
+    all_check_metrics_var = tk.BooleanVar(value=False)
 
     # Создание списка с информацией о метриках:
     metrics_info = [
-        ("Расстояние между точками", "distance"),
-        ("Максимальное расстояние между точками", "max_distance"),
-        ("Радиус блуждания","max_distance_from_start_radius"),
-        ("Центр масс","center_of_mass"),
-        ("Количество повторяющихся точек","repeat_points"),
-        ("Среднее направление движения","average_direction"),
-        ("Радиус охвата","convex_radius"),
-        ("Среднее расстояние от начальной точки","mean_distance_from_start"),
-        ("Максимальное удаление от начальной точки","max_distance_from_start_line"),
-        ("Количество пересечений с начальной точкой","start_point_crossings"),
-        ("Общее время движения","total_time"),
-        ("Соотношение перемещения к длине пути","displacement_to_path_ratio"),
+        ("Расстояние между точками", "distance", True),
+        ("Максимальное расстояние между точками", "max_distance", True),
+        ("Радиус блуждания","max_distance_from_start_radius", True),
+        ("Центр масс","center_of_mass", True),
+        ("Количество повторяющихся точек","repeat_points", True),
+        ("Среднее направление движения","average_direction", True),
+        ("Радиус охвата","convex_radius", True),
+        ("Среднее расстояние от начальной точки","mean_distance_from_start", False),
+        ("Максимальное удаление от начальной точки","max_distance_from_start_line", True),
+        ("Количество пересечений с начальной точкой","start_point_crossings", False),
+        ("Общее время движения","total_time", False),
+        ("Соотношение перемещения к длине пути","displacement_to_path_ratio", False),
     ]
 
     # Создание пустого списка для объектов метрик
     metrics_object_list = []
 
+    def on_any_metrics_toggle():
+        """Функция проверки списка метрик"""
+        # Проверка всех чек-боксов метрик
+        all_enabled = all(metric.enabled_var.get() for metric in metrics_object_list)
+        # Если все метрики выбраны, но чек-бокс "Выбрать все" не отмечен
+        if all_enabled and not all_check_metrics_var.get():
+            # Отмечаем чек-бокс "Выбрать всё"
+            all_check_metrics_var.set(True)
+        # Иначе если не все метрики выбраны, но чек-окс "Выбрать всё" отмечен
+        elif not all_enabled and all_check_metrics_var.get():
+            # Снимаем отметку с чек-бокса "Выбрать всё"
+            all_check_metrics_var.set(False)
+
     # Для каждой метрики из списка
-    for i, (label_text, key) in enumerate(metrics_info):
+    for i, (label_text, key, show_flag) in enumerate(metrics_info):
         # Создание объекта метрики через класс
-        metric = MetricCheckBox(frame, label_text, i)
+        metric = MetricCheckBox(frame, label_text, i, show_flag, on_toggle_callback=on_any_metrics_toggle)
         # Добавление объекта в список
         metrics_object_list.append(metric)
+
 
     def toggle_all_metrics():
         """Обработчик включения чек-бокса "Выбрать всё" """
@@ -510,11 +526,10 @@ def create_metrics_frame(parent):
         for metric in metrics_object_list:
             metric.update_states(enable=all_selected, show=all_selected)
 
-    # Создание переменной состояния для чек-бокса "Выбрать всё"
-    all_check_metrics_var = tk.BooleanVar(value=False)
+
     # Создание чек-бокса "Выбрать всё" и задание его расположения
-    all_check_metrics = ttk.Checkbutton(frame, text="Check and show all", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
-    all_check_metrics.grid(row=len(metrics_info), column=0, sticky="e", columnspan=3)
+    all_check_metrics = ttk.Checkbutton(frame, text="Check all", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
+    all_check_metrics.grid(row=len(metrics_info), column=0, sticky="e", columnspan=3, padx=55)
 
     return label, frame, list(metrics_object_list)
 
