@@ -456,7 +456,7 @@ def create_settings_frames(title, metrics_label, metrics_frame, is_animation=Fal
 
     # Создание чек-бокса с возможностью подсчёта метрик и со своим стилем
     style = ttk.Style()
-    style.configure("Bold.TCheckbutton", font=("TLabel", 10, "bold"))
+    style.configure("Bold.TCheckbutton", font=("Arial", 10, "bold"))
     check_metrics = ttk.Checkbutton(frame, text="Additional metrics", variable=metrics_var, command=toggle_metrics_frame, style="Bold.TCheckbutton")
     check_metrics.grid(row=4, column=0, sticky="w", padx=5, pady=2)
 
@@ -542,7 +542,7 @@ def create_metrics_frame(parent):
             path_entry.config(state="disabled")
 
     # Создание надписи перед RadioButton "window" и "file"
-    result_label = ttk.Label(frame, text="Display results in...", style="Bold.TCheckbutton")
+    result_label = ttk.Label(frame, text="Display results in...", font=("Arial 10 bold"))
     result_label.grid(row=len(metrics_info), column=0, sticky="w")
 
     # Создание RadioButton "window" и "file" c отслеживаем изменения их состояния
@@ -567,7 +567,7 @@ def create_metrics_frame(parent):
 # Создание главного окна
 root = tk.Tk()
 root.title("Случайное блуждание")
-root.geometry("500x780+100+100")
+root.geometry("500x800+100+100")
 root.resizable(False, False)
 
 # Создание пустых словарей фреймов с дополнительными настройками и заголовков для них
