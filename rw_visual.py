@@ -528,8 +528,38 @@ def create_metrics_frame(parent):
 
 
     # Создание чек-бокса "Выбрать всё" и задание его расположения
-    all_check_metrics = ttk.Checkbutton(frame, text="Check all", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
-    all_check_metrics.grid(row=len(metrics_info), column=0, sticky="e", columnspan=3, padx=55)
+    all_check_metrics = ttk.Checkbutton(frame, text="Check all metrics", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
+    all_check_metrics.grid(row=len(metrics_info), column=0, sticky="w", columnspan=3, pady=10, padx=300)
+
+    # Создание кнопок для выбора способа отображения метрик
+    result_output_var = tk.StringVar(value='window')
+
+    def update_path_entry_state():
+        """Функция обновления состояния строки пути сохранения файла"""
+        if result_output_var.get()=="file":
+            path_entry.config(state="normal")
+        else:
+            path_entry.config(state="disabled")
+
+    # Создание надписи перед RadioButton "window" и "file"
+    result_label = ttk.Label(frame, text="Display results in...", style="Bold.TCheckbutton")
+    result_label.grid(row=len(metrics_info), column=0, sticky="w")
+
+    # Создание RadioButton "window" и "file" c отслеживаем изменения их состояния
+    radio_window = ttk.Radiobutton(frame, text="window", variable=result_output_var, value="window", command=update_path_entry_state)
+    radio_file = ttk.Radiobutton(frame, text="file", variable=result_output_var, value="file", command=update_path_entry_state)
+    # Задание расположения кнопок
+    radio_window.grid(row=len(metrics_info), column=0, sticky="w", padx=140)
+    radio_file.grid(row=len(metrics_info), column=0, sticky="w", padx=210)
+
+    # Создание переменной с путём сохранения файла
+    path_var = tk.StringVar(value="results/metrics_output.txt")
+    # Создание надписи и поля пути по умолчанию для сохранения файла
+    path_label = ttk.Label(frame, text="Path: ", font=("Arial",9))
+    path_entry = tk.Entry(frame, textvariable=path_var, width=55, state="disabled")
+    # Задание расположения надписи и поля
+    path_label.grid(row=len(metrics_info)+1, column=0, sticky="w")
+    path_entry.grid(row=len(metrics_info)+1, column=0, sticky="w", padx=50)
 
     return label, frame, list(metrics_object_list)
 

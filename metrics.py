@@ -27,7 +27,7 @@ class MetricCheckBox:
             self.checkbox_show = ttk.Checkbutton(parent, text="Показать на графике", variable=self.show_var)
             # Чек-бокс отображения метрики на графике по-умолчанию отключен
             self.checkbox_show.config(state="disabled")
-            self.checkbox_show.grid(row=row, column=1, sticky='e')
+            self.checkbox_show.grid(row=row, column=0, sticky='e', padx=300)
         else:
             self.checkbox_show = None
             #self.show_var.set(True)
