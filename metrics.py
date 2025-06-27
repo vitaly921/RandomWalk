@@ -12,6 +12,7 @@ class MetricCheckBox:
         :param label: название метрики;
         :param row: номер строки (ряда) размещения чек-боксов"""
 
+        self.label = label
         # Создание булевых переменных-состояний чек-боксов
         self.enabled_var = tk.BooleanVar(value=False)
         self.show_var = tk.BooleanVar(value=True)

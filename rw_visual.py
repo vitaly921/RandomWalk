@@ -11,7 +11,7 @@ from matplotlib.widgets import Button
 import threading
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from fontTools.unicodedata import block
+#from fontTools.unicodedata import block
 
 
 from metrics import MetricCheckBox
@@ -33,7 +33,7 @@ def open_metrics_window(metrics_object_list):
     #if result_output_var.get() != 'window':
     #    return
 
-    selected_metrics = [metric.checkbox_enabled.cget('text') for metric in metrics_object_list if metric.enabled_var.get()]
+    selected_metrics = [metric.label for metric in metrics_object_list if metric.enabled_var.get()]
     if not selected_metrics:
         return
 
@@ -258,8 +258,10 @@ def build_animation(metrics_object_list):
 
     # Если выбрана анимация точек
     if points_var.get():
-        enabled_metrics = [m.checkbox_enabled.cget('text') for m in metrics_object_list if m.enabled_var.get()]
-        #metrics_text = '\n\n'.join(f'{m}' for m in enabled_metrics)
+        enabled_metrics = [m.label for m in metrics_object_list if m.enabled_var.get()]
+        metrics_text = '\n\n'.join(f'{m}' for m in enabled_metrics)
+        metrics_value = '\n\n'.join('...None' for _ in enabled_metrics)
+
         # Получение пользовательского значения размера точек
         size_points = int(points_size_var.get())
         # Получение пользовательского значения чек-бокса цветовой карты
@@ -275,21 +277,27 @@ def build_animation(metrics_object_list):
         fig, ax = plt.subplots(figsize=(12, 5))
         plt.subplots_adjust(right=0.6)
 
-        table_ax = fig.add_axes([0.65, 0.25, 0.3, 0.5])
-        table_ax.axis("off")
-        table = Table(table_ax, bbox=[0, 0, 1, 1])
-        #table = ax.table(cellText=table_data, colLabels=["Метрика", "Значение"], loc="right")
-        table.add_cell(0, 0, 0.5, 0.2, text = "Метрика", loc='center', facecolor='lightgray')
-        table.add_cell(0, 1, 0.5, 0.2, text="Значение", loc='center', facecolor='lightgray')
-
-        for i, metric in enumerate(enabled_metrics, start=1):
-            table.add_cell(i, 0, 0.5, 0.2, text=metric, loc="left")
-            table.add_cell(i, 1, 0.5, 0.2, text='---', loc="center")
-
-        table_ax.add_table(table)
-
-
-        #fig.text(0.62, 0.85, metrics_text, fontsize=9, va='top', ha='left')
+        #table_ax = fig.add_axes([0.65, 0.25, 0.3, 0.5])
+        #table_ax.axis("off")
+        #table = Table(table_ax, bbox=[0, 0, 1, 1])
+        ##table = ax.table(cellText=table_data, colLabels=["Метрика", "Значение"], loc="right")
+        #cell = table.add_cell(0, 0, 0.5, 0.05, text = "Метрика", loc='center', facecolor='lightgray')
+        #cell.get_text().set_fontsize(20)
+        #cell= table.add_cell(0, 1, 0.5, 0.05, text="Значение", loc='center', facecolor='lightgray')
+        #cell.get_text().set_fontsize(20)
+#
+        #for i, metric in enumerate(enabled_metrics, start=1):
+        #    cell= table.add_cell(i, 0, 0.5, 0.05, text=metric, loc="left")
+        #    cell.get_text().set_fontsize(20)
+        #    cell= table.add_cell(i, 1, 0.5, 0.05, text='---', loc="center")
+        #    cell.get_text().set_fontsize(20)
+#
+        #table_ax.add_table(table)
+#
+        #plt.sca(ax)
+        fig.text(0.75, 0.92, "Расчёт метрик", fontsize=12, va='top', ha='left')
+        fig.text(0.62, 0.85, metrics_text, fontsize=9, va='top', ha='left', family='monospace')
+        fig.text(0.95, 0.85, metrics_value, fontsize=9, va='top', ha='right', family='monospace')
 
         # Установка границ осей
         ax.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
@@ -303,6 +311,7 @@ def build_animation(metrics_object_list):
         # Отрисовка линии между начальной и конечной точками
         distance_line_for_points_graph, = ax.plot([],[], c='red', linestyle='--', linewidth=3,
                  label='Line between points')
+
 
         # Обработка случая отображения с цветовой картой
         if colormap_mode:
