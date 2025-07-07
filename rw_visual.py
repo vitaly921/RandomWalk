@@ -19,69 +19,18 @@ from metrics import MetricCheckBox
 import random_walk
 from random_walk import RandomWalk
 
-def on_create_new_click(result_output_var, metrics_object_list):
-    """"""
-    build_graphs(metrics_object_list)
-
-    if result_output_var.get() == 'window':
-        #threading.Thread(target=open_metrics_window, args=(metrics_object_list,), daemon=True).start()
-        open_metrics_window(metrics_object_list)
-
-
-def open_metrics_window(metrics_object_list):
-    """"""
-    #if result_output_var.get() != 'window':
-    #    return
-
-    selected_metrics = [metric.label for metric in metrics_object_list if metric.enabled_var.get()]
-    if not selected_metrics:
-        return
-
-    metrics_window = tk.Toplevel()
-    metrics_window.title("Selected Metrics")
-    metrics_window.geometry("400x300")
-    metrics_window.resizable(False, False)
-
-    label = ttk.Label(metrics_window, text="Selected metrics: ")
-    label.pack(pady=(10, 5))
-
-    for metric in selected_metrics:
-        label_metric = ttk.Label(metrics_window, text=f"{metric}", anchor="w")
-        label_metric.pack(anchor="w", padx=20)
-
-    # Пространство для кнопок
-    button_frame = ttk.Frame(metrics_window)
-    button_frame.pack(pady=20)
-
-    def save_metrics_from_window_to_file():
-        """"""
-        file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text_files", ".txt")], title="Save results as...")
-        if file_path:
-            with open(file_path, "w", encoding="utf-8") as f:
-                for metric in selected_metrics:
-                    f.write(f"{metric}\n")
-
-    def close_metric_window():
-        """"""
-        metrics_window.destroy()
-
-    # Кнопки окна вывода результатов для метрик
-    ttk.Button(button_frame, text="Save as", command=save_metrics_from_window_to_file).grid(row=0, column=0, padx=10)
-    ttk.Button(button_frame, text="Close", command=close_metric_window).grid(row=0, column=1, padx=10)
-
 
 def build_graphs(metrics_object_list):
     """Функция для выбора способа отображения линейных и точечных графиков для дальнейшего построения"""
     # По умолчанию выбран статический способ отображения
     if mode_var.get() == 'static':
-        build_static_graph()
+        build_static_graph(metrics_object_list)
     # Иначе выбирается анимированный способ отображения
     else:
-        #threading.Thread(target=build_animation).start()
         build_animation(metrics_object_list)
 
 
-def build_static_graph():
+def build_static_graph(metrics_object_list):
     """Функция построения линейных и точечных графиков в виде изображения"""
     # Объявление глобальных переменных
     global points_size_var
@@ -111,8 +60,8 @@ def build_static_graph():
     # Если выбран точечный график
     if points_var.get():
         # Задание размера окна для точечного графика
-        plt.figure(figsize=(9, 5))
-
+        create_window_for_figure(metrics_var, metrics_object_list)
+        plt.title("График случайного блуждания точек")
         # Получение пользовательского значения размера точек
         size_points = int(points_size_var.get())
         # Получение пользовательского значения цветовой карты точек
@@ -146,7 +95,8 @@ def build_static_graph():
     # Если выбран линейный график
     if line_var.get():
         # Задание размера окна для линейного графика
-        plt.figure(figsize=(9, 5))
+        create_window_for_figure(metrics_var, metrics_object_list)
+        plt.title("График случайного блуждания линии")
         # Получение пользовательского значения ширины линии
         line_color = line_color_var.get()
         # Получение пользовательского значения цвета линии
@@ -204,7 +154,7 @@ def build_animation(metrics_object_list):
         line_size = line_size_var.get()
 
         # Создание окна графика и осей
-        fig, ax = plt.subplots(figsize=(8, 6))
+        fig, ax = create_window_for_figure(metrics_var, metrics_object_list)
 
         # Установка границ осей
         ax.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
@@ -254,14 +204,8 @@ def build_animation(metrics_object_list):
         # Установка заголовка для окна с анимацией
         plt.title("Анимация линий")
 
-        add_save_button(fig, animation_line)
-
     # Если выбрана анимация точек
     if points_var.get():
-        enabled_metrics = [m.label for m in metrics_object_list if m.enabled_var.get()]
-        metrics_text = '\n\n'.join(f'{m}' for m in enabled_metrics)
-        metrics_value = '\n\n'.join('...None' for _ in enabled_metrics)
-
         # Получение пользовательского значения размера точек
         size_points = int(points_size_var.get())
         # Получение пользовательского значения чек-бокса цветовой карты
@@ -273,9 +217,9 @@ def build_animation(metrics_object_list):
 
         # Создание списка длиной количества точек
         point_numbers = list(range(rw.num_points))
-        # Создание окна графика и осей
-        fig, ax = plt.subplots(figsize=(12, 5))
-        plt.subplots_adjust(right=0.6)
+
+        fig, ax = create_window_for_figure(metrics_var, metrics_object_list)
+
 
         #table_ax = fig.add_axes([0.65, 0.25, 0.3, 0.5])
         #table_ax.axis("off")
@@ -293,11 +237,8 @@ def build_animation(metrics_object_list):
         #    cell.get_text().set_fontsize(20)
 #
         #table_ax.add_table(table)
-#
-        #plt.sca(ax)
-        fig.text(0.75, 0.92, "Расчёт метрик", fontsize=12, va='top', ha='left')
-        fig.text(0.62, 0.85, metrics_text, fontsize=9, va='top', ha='left', family='monospace')
-        fig.text(0.95, 0.85, metrics_value, fontsize=9, va='top', ha='right', family='monospace')
+
+
 
         # Установка границ осей
         ax.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
@@ -305,6 +246,7 @@ def build_animation(metrics_object_list):
         # Создание начальных точек
         #points, = ax.plot([], [], 'ro', markersize=(size_points**0.5))
         current_point, = ax.plot(rw.x_values[0], rw.y_values[0], 'ro')
+
         # Отрисовка увеличенных начальной и конечной точек блуждания
         start_point = plt.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=2)
         end_point = plt.scatter(rw.x_values[-2], rw.y_values[-2], c='orange', edgecolors='none', s=100, zorder=2)
@@ -363,17 +305,24 @@ def build_animation(metrics_object_list):
     # Отображение выбранных окон
     plt.show()
 
-def add_save_button(fig, ani):
-    """"""
-    ax_button = plt.axes([0.8, 0.01, 0.1, 0.05])
-    button = Button(ax_button, "Save animation")
+def create_window_for_figure(metrics_var, metrics_object_list):
+    """Функция создания окна для графика"""
+    # В зависимости от выбора дополнительных метрик определяется размер и наполнение окна
+    if metrics_var.get() and any(m.enabled_var.get() for m in metrics_object_list):
+        # Создание окна графика и осей
+        fig, ax = plt.subplots(figsize=(12, 5))
+        enabled_metrics = [m.label for m in metrics_object_list if m.enabled_var.get()]
+        metrics_text = '\n\n'.join(f'{m}' for m in enabled_metrics)
+        metrics_value = '\n\n'.join('...None' for _ in enabled_metrics)
+        # plt.sca(ax)
+        fig.text(0.75, 0.92, "Расчёт метрик", fontsize=12, va='top', ha='left')
+        fig.text(0.62, 0.85, metrics_text, fontsize=9, va='top', ha='left', family='monospace')
+        fig.text(0.95, 0.85, metrics_value, fontsize=9, va='top', ha='right', family='monospace')
+        plt.subplots_adjust(right=0.6)
+    else:
+        fig, ax = plt.subplots(figsize=(8, 6))
 
-    def on_save(event):
-        path = filedialog.asksaveasfilename(defaultextension=".mp4", filetypes=[("MP4 files", "*.mp4")])
-        if path:
-            ani.save(path, writer='ffmpeg', fps=30)
-            print(f"Save in: {path}")
-    button.on_clicked(on_save)
+    return fig, ax
 
 
 def validate_count_points(input_value):
@@ -636,45 +585,16 @@ def create_metrics_frame(parent):
 
     # Создание чек-бокса "Выбрать всё" и задание его расположения
     all_check_metrics = ttk.Checkbutton(frame, text="Check all metrics", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
-    all_check_metrics.grid(row=len(metrics_info), column=0, sticky="w", columnspan=3, pady=10, padx=300)
+    all_check_metrics.grid(row=len(metrics_info), column=0, sticky="w", columnspan=3, pady=8)
 
-    # Создание кнопок для выбора способа отображения метрик
-    result_output_var = tk.StringVar(value='window')
 
-    def update_path_entry_state():
-        """Функция обновления состояния строки пути сохранения файла"""
-        if result_output_var.get()=="file":
-            path_entry.config(state="normal")
-        else:
-            path_entry.config(state="disabled")
-
-    # Создание надписи перед RadioButton "window" и "file"
-    result_label = ttk.Label(frame, text="Display results in...", font=("Arial 10 bold"))
-    result_label.grid(row=len(metrics_info), column=0, sticky="w")
-
-    # Создание RadioButton "window" и "file" c отслеживаем изменения их состояния
-    radio_window = ttk.Radiobutton(frame, text="window", variable=result_output_var, value="window", command=update_path_entry_state)
-    radio_file = ttk.Radiobutton(frame, text="file", variable=result_output_var, value="file", command=update_path_entry_state)
-    # Задание расположения кнопок
-    radio_window.grid(row=len(metrics_info), column=0, sticky="w", padx=140)
-    radio_file.grid(row=len(metrics_info), column=0, sticky="w", padx=210)
-
-    # Создание переменной с путём сохранения файла
-    path_var = tk.StringVar(value="results/metrics_output.txt")
-    # Создание надписи и поля пути по умолчанию для сохранения файла
-    path_label = ttk.Label(frame, text="Path: ", font=("Arial",9))
-    path_entry = tk.Entry(frame, textvariable=path_var, width=55, state="disabled")
-    # Задание расположения надписи и поля
-    path_label.grid(row=len(metrics_info)+1, column=0, sticky="w")
-    path_entry.grid(row=len(metrics_info)+1, column=0, sticky="w", padx=50)
-
-    return label, frame, result_output_var, list(metrics_object_list)
+    return label, frame, list(metrics_object_list)
 
 
 # Создание главного окна
 root = tk.Tk()
 root.title("Случайное блуждание")
-root.geometry("500x800+100+100")
+root.geometry("500x770+100+100")
 root.resizable(False, False)
 
 # Создание пустых словарей фреймов с дополнительными настройками и заголовков для них
@@ -713,7 +633,7 @@ colormap_var = tk.BooleanVar(value=False)
 metrics_var = tk.BooleanVar(value=False)
 
 # Создание дополнительного окна с метриками с помощью функции
-metrics_label, metrics_frame, result_output_var, metrics_object_list = create_metrics_frame(root)
+metrics_label, metrics_frame, metrics_object_list = create_metrics_frame(root)
 
 
 # Добавляем все возможные комбинации в словари `frames` и `labels` и вызываем функцию для создания всех возможных
@@ -800,7 +720,7 @@ repeat_check = ttk.Checkbutton(frame, text="Repeating", variable=repeat_var)
 repeat_check.grid(row=0, column=2, sticky='w', padx=5, pady=2)
 
 # Создание кнопки для начала построения графиков
-button = ttk.Button(root, text = "Create New", command=lambda: on_create_new_click(result_output_var, metrics_object_list), state=tk.DISABLED)
+button = ttk.Button(root, text = "Create New", command=lambda: build_graphs(metrics_object_list), state=tk.DISABLED)
 button.pack(side='bottom', pady=10)
 
 
