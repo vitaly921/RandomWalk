@@ -3,7 +3,7 @@ from tkinter import ttk, SOLID
 
 class MetricCheckBox:
     """Класс для создания пары чек-боксов, управляющих выбором метрики и её отображения на графике"""
-    def __init__(self, parent, label, row, show_flag, on_toggle_callback=None):
+    def __init__(self, parent, label, row, show_flag, key=None, calc_func=None, on_toggle_callback=None):
         """Функция инициализации
         - основного чек-бокса для включения-выключения метрики;
         - дополнительного чек-бокса для отображения включенной метрики на графике
@@ -13,6 +13,8 @@ class MetricCheckBox:
         :param row: номер строки (ряда) размещения чек-боксов"""
 
         self.label = label
+        self.key = key
+        self.calc_func=calc_func
         # Создание булевых переменных-состояний чек-боксов
         self.enabled_var = tk.BooleanVar(value=False)
         self.show_var = tk.BooleanVar(value=True)

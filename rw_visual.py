@@ -60,7 +60,7 @@ def build_static_graph(metrics_object_list):
     # Если выбран точечный график
     if points_var.get():
         # Задание размера окна для точечного графика
-        create_window_for_figure(metrics_var, metrics_object_list)
+        create_window_for_figure(metrics_var, metrics_object_list, rw)
         plt.title("График случайного блуждания точек")
         # Получение пользовательского значения размера точек
         size_points = int(points_size_var.get())
@@ -95,7 +95,7 @@ def build_static_graph(metrics_object_list):
     # Если выбран линейный график
     if line_var.get():
         # Задание размера окна для линейного графика
-        create_window_for_figure(metrics_var, metrics_object_list)
+        create_window_for_figure(metrics_var, metrics_object_list, rw)
         plt.title("График случайного блуждания линии")
         # Получение пользовательского значения ширины линии
         line_color = line_color_var.get()
@@ -154,7 +154,7 @@ def build_animation(metrics_object_list):
         line_size = line_size_var.get()
 
         # Создание окна графика и осей
-        fig, ax = create_window_for_figure(metrics_var, metrics_object_list)
+        fig, ax = create_window_for_figure(metrics_var, metrics_object_list, rw)
 
         # Установка границ осей
         ax.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
@@ -218,7 +218,7 @@ def build_animation(metrics_object_list):
         # Создание списка длиной количества точек
         point_numbers = list(range(rw.num_points))
 
-        fig, ax = create_window_for_figure(metrics_var, metrics_object_list)
+        fig, ax = create_window_for_figure(metrics_var, metrics_object_list, rw)
 
 
         #table_ax = fig.add_axes([0.65, 0.25, 0.3, 0.5])
@@ -305,15 +305,18 @@ def build_animation(metrics_object_list):
     # Отображение выбранных окон
     plt.show()
 
-def create_window_for_figure(metrics_var, metrics_object_list):
+def create_window_for_figure(metrics_var, metrics_object_list, rw):
     """Функция создания окна для графика"""
     # В зависимости от выбора дополнительных метрик определяется размер и наполнение окна
     if metrics_var.get() and any(m.enabled_var.get() for m in metrics_object_list):
         # Создание окна графика и осей
         fig, ax = plt.subplots(figsize=(12, 5))
-        enabled_metrics = [m.label for m in metrics_object_list if m.enabled_var.get()]
-        metrics_text = '\n\n'.join(f'{m}' for m in enabled_metrics)
-        metrics_value = '\n\n'.join('...None' for _ in enabled_metrics)
+        # Отбираем выбранные пользователем метрики
+        enabled_metrics = [m for m in metrics_object_list if m.enabled_var.get()]
+        # Получаем текст выбранных пользователем метрик
+        metrics_text = '\n\n'.join(f'{m.label}' for m in enabled_metrics)
+        # Получаем значения выбранных пользователем метрик
+        metrics_value = '\n\n'.join(str(m.calc_func(rw)) if callable(m.calc_func) else "...None" for m in enabled_metrics)
         # plt.sca(ax)
         fig.text(0.75, 0.92, "Расчёт метрик", fontsize=12, va='top', ha='left')
         fig.text(0.62, 0.85, metrics_text, fontsize=9, va='top', ha='left', family='monospace')
@@ -524,6 +527,16 @@ def create_settings_frames(title, metrics_label, metrics_frame, is_animation=Fal
     return label, frame
 
 
+def constant_stub(rw):
+    """Функция-заглушка для результатов метрик"""
+    return "...None"
+
+def calc_dist(rw):
+    """Функция подсчета расстояния между начальной и конечной точками блуждания"""
+    distance = round(math.sqrt((rw.x_values[-1] - rw.x_values[0]) ** 2 + (rw.y_values[-1] - rw.y_values[0]) ** 2), 2)
+    return distance
+
+
 def create_metrics_frame(parent):
     """Функция создания динамического окна с метриками"""
     # Создание надписи для окна с метриками
@@ -535,18 +548,18 @@ def create_metrics_frame(parent):
 
     # Создание списка с информацией о метриках:
     metrics_info = [
-        ("Расстояние между точками", "distance", True),
-        ("Максимальное расстояние между точками", "max_distance", True),
-        ("Радиус блуждания","max_distance_from_start_radius", True),
-        ("Центр масс","center_of_mass", True),
-        ("Количество повторяющихся точек","repeat_points", True),
-        ("Среднее направление движения","average_direction", True),
-        ("Радиус охвата","convex_radius", True),
-        ("Среднее расстояние от начальной точки","mean_distance_from_start", False),
-        ("Максимальное удаление от начальной точки","max_distance_from_start_line", True),
-        ("Количество пересечений с начальной точкой","start_point_crossings", False),
-        ("Общее время движения","total_time", False),
-        ("Соотношение перемещения к длине пути","displacement_to_path_ratio", False),
+        ("Расстояние между точками", "distance", True, calc_dist),
+        ("Максимальное расстояние между точками", "max_distance", True, constant_stub),
+        ("Радиус блуждания","max_distance_from_start_radius", True, constant_stub),
+        ("Центр масс","center_of_mass", True, constant_stub),
+        ("Количество повторяющихся точек","repeat_points", True, constant_stub),
+        ("Среднее направление движения","average_direction", True, constant_stub),
+        ("Радиус охвата","convex_radius", True, constant_stub),
+        ("Среднее расстояние от начальной точки","mean_distance_from_start", False, constant_stub),
+        ("Максимальное удаление от начальной точки","max_distance_from_start_line", True, constant_stub),
+        ("Количество пересечений с начальной точкой","start_point_crossings", False, constant_stub),
+        ("Общее время движения","total_time", False, constant_stub),
+        ("Соотношение перемещения к длине пути","displacement_to_path_ratio", False, constant_stub),
     ]
 
     # Создание пустого списка для объектов метрик
@@ -566,9 +579,9 @@ def create_metrics_frame(parent):
             all_check_metrics_var.set(False)
 
     # Для каждой метрики из списка
-    for i, (label_text, key, show_flag) in enumerate(metrics_info):
+    for i, (label_text, key, show_flag, calc_func) in enumerate(metrics_info):
         # Создание объекта метрики через класс
-        metric = MetricCheckBox(frame, label_text, i, show_flag, on_toggle_callback=on_any_metrics_toggle)
+        metric = MetricCheckBox(frame, label_text, i, show_flag, key=key, calc_func=calc_func, on_toggle_callback=on_any_metrics_toggle)
         # Добавление объекта в список
         metrics_object_list.append(metric)
 
