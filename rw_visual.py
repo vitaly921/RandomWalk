@@ -537,6 +537,204 @@ def calc_dist(rw):
     return distance
 
 
+def calc_max_distance_between_points(rw):
+    """Функция подсчета максимального расстояния между точками"""
+    max_dist = 0
+    for i in range(len(rw.x_values)):
+        for j in range(i+1, len(rw.x_values)):
+            dist = math.hypot(rw.x_values[i]-rw.x_values[j], rw.y_values[i]-rw.y_values[j])
+            max_dist = max(max_dist, dist)
+    return round(max_dist, 2)
+
+
+def calc_max_distance_from_start_point(rw):
+    """Функция подсчета радиуса блуждания"""
+    max_dist = 0
+    x0, y0 =  rw.x_values[0], rw.y_values[0]
+    for x, y in zip(rw.x_values, rw.x_values):
+        dist = math.hypot(x-x0, y-y0)
+        max_dist = max(max_dist, dist)
+    return round(max_dist, 2)
+
+
+def center_of_mass(rw):
+    """Функция подсчёта координат центра масс"""
+    x_avg = sum(rw.x_values)/len(rw.x_values)
+    y_avg = sum(rw.y_values)/len(rw.y_values)
+    return f"({x_avg:.2f},{y_avg:.2f})"
+
+
+def calc_repeat_points(rw):
+    """Функция подсчёта кол-ва повторяющихся точек"""
+    points = list(zip(rw.x_values, rw.y_values))
+    count_repeat_points = len(points) - len(set(points))
+    percent_repeat_points = count_repeat_points/len(points)*100
+    return f"{count_repeat_points} ({percent_repeat_points:.2f}%)"
+
+def calc_repeat_start_point(rw):
+    """Функция подсчета кол-ва возвратов в начальную точку"""
+    x0, y0 = rw.x_values[0], rw.y_values[0]
+    repeats = 0
+
+    for x,y in zip(rw.x_values[1:], rw.y_values[1:]):
+        if x==x0 and y==y0:
+            repeats += 1
+    return repeats
+
+
+def angle_between_start_end_point(rw):
+    """Функция вычисления угла между начальной и конечной точками"""
+    dx_total = rw.x_values[-1] - rw.x_values[0]
+    dy_total = rw.y_values[-1] - rw.y_values[0]
+    angle_rad = math.atan2(dy_total, dx_total)
+    angle_deg = math.degrees(angle_rad)
+    return round(angle_deg, 2)
+
+
+def calc_average_direction(rw):
+    """Функция вычисления среднего направления движения"""
+    angles = []
+    for i in range(1, len(rw.x_values)):
+        dx = rw.x_values[i] - rw.x_values[i-1]
+        dy = rw.y_values[i] - rw.y_values[i-1]
+        angles.append(math.atan2(dy, dx))
+
+    average_angle_rad = math.atan2(sum(math.sin(a) for a in angles) / len(angles),
+                                   sum(math.cos(a) for a in angles) / len(angles))
+    return round(math.degrees(average_angle_rad), 2)
+
+
+def calc_convex_radius(rw):
+    """Функция вычисления радиуса охвата от центра масс"""
+    max_radius = 0.0
+    x_avg = sum(rw.x_values)/len(rw.x_values)
+    y_avg = sum(rw.y_values)/len(rw.y_values)
+
+    for x, y in zip(rw.x_values, rw.y_values):
+        radius = math.hypot(x - x_avg, y - y_avg)
+        max_radius = max(max_radius, radius)
+    return round(max_radius, 2)
+
+
+def calc_msd(rw):
+    """Функция подсчёта среднего квадрата перемещения"""
+    x0, y0 = rw.x_values[0], rw.y_values[0]
+
+    sum_squared_dist = 0.0
+
+    for x, y in zip(rw.x_values, rw.y_values):
+        dx = x - x0
+        dy = y - y0
+        sum_squared_dist += math.hypot(dx, dy)**2
+
+    msd = sum_squared_dist/len(rw.x_values)
+    return round(msd, 2)
+
+
+def calc_path_length(rw):
+    """Функция вычисления длины пути блуждания"""
+    if len(rw.x_values) < 2:
+        return 0.0
+
+    total_length = 0.0
+    for i in range(len(rw.x_values)-1):
+        dx = rw.x_values[i+1] - rw.x_values[i]
+        dy = rw.y_values[i+1] - rw.y_values[i]
+        length = math.hypot(dx, dy)
+        total_length +=length
+
+    return round(total_length, 2)
+
+
+def calc_efficiency_ratio(rw):
+    """Вычисляет отношение перемещения к длине пути (эффективность движения)"""
+    if len(rw.x_values) < 2:
+        return None
+    total_length = calc_path_length(rw)
+    displacement = calc_dist(rw)
+
+    if total_length > 0:
+        efficiency = displacement/total_length
+        eff_percent = efficiency*100
+    else:
+        efficiency = 0.0
+        eff_percent = 0.0
+
+    return f"{efficiency:.2f} ({eff_percent:.2f}%)"
+
+
+def count_turns(rw):
+    """Функция подсчёта значимых поворотов (более 45 град.)в траектории блуждания"""
+    angle_threshold = 90
+
+    if len(rw.x_values) < 3:
+        return 0
+
+    turn_count = 0
+    all_angles_count = len(rw.x_values) - 2
+
+    for i in range(1, len(rw.x_values)-1):
+        # Вектор предыдущего отрезка
+        dx1 = rw.x_values[i] - rw.x_values[i-1]
+        dy1 = rw.y_values[i] - rw.y_values[i-1]
+
+        # Вектор следующего отрезка
+        dx2 = rw.x_values[i+1] - rw.x_values[i]
+        dy2 = rw.y_values[i+1] - rw.y_values[i]
+
+        # Вычисляем угол между векторами
+        angle = math.degrees(math.atan2(dy2, dx2) - math.atan2(dy1, dx1))
+        angle = (angle + 180) % 360 -180    # Нормализация в диапазоне [-180, 180]
+
+        if abs(angle) >= angle_threshold:
+            turn_count += 1
+    percent_turn_count = turn_count / all_angles_count * 100
+    return f"{turn_count} ({percent_turn_count:.2f}%)"
+
+
+def mean_angles(rw):
+    """Расчет среднего угла поворота на траектории"""
+    if len(rw.x_values) < 3:
+        return 0
+
+    angles = []
+
+    for i in range(1, len(rw.x_values)-1):
+        # Вектор предыдущего отрезка
+        dx1 = rw.x_values[i] - rw.x_values[i-1]
+        dy1 = rw.y_values[i] - rw.y_values[i-1]
+
+        # Вектор следующего отрезка
+        dx2 = rw.x_values[i+1] - rw.x_values[i]
+        dy2 = rw.y_values[i+1] - rw.y_values[i]
+
+        # Вычисляем угол между векторами
+        angle = math.degrees(math.atan2(dy2, dx2) - math.atan2(dy1, dx1))
+        angle = (angle + 180) % 360 -180    # Нормализация в диапазоне [-180, 180]
+
+        angles.append(abs(angle))
+
+    mean_angle = sum(angles)/len(angles) if angles else 0
+    return round(mean_angle, 2)
+
+def calc_average_step(rw):
+    """Функция подсчета средней длины шага"""
+
+    if len(rw.x_values) < 2:
+        return None
+
+    length_steps = 0.0
+    step_count = len(rw.x_values)-1
+
+    for i in range(step_count):
+        dx = rw.x_values[i+1] - rw.x_values[i]
+        dy = rw.y_values[i+1] - rw.y_values[i]
+        length_steps += math.hypot(dx, dy)
+
+    average_length = length_steps / step_count
+    return round(average_length, 2)
+
+
 def create_metrics_frame(parent):
     """Функция создания динамического окна с метриками"""
     # Создание надписи для окна с метриками
@@ -548,18 +746,20 @@ def create_metrics_frame(parent):
 
     # Создание списка с информацией о метриках:
     metrics_info = [
-        ("Расстояние между точками", "distance", True, calc_dist),
-        ("Максимальное расстояние между точками", "max_distance", True, constant_stub),
-        ("Радиус блуждания","max_distance_from_start_radius", True, constant_stub),
-        ("Центр масс","center_of_mass", True, constant_stub),
-        ("Количество повторяющихся точек","repeat_points", True, constant_stub),
-        ("Среднее направление движения","average_direction", True, constant_stub),
-        ("Радиус охвата","convex_radius", True, constant_stub),
-        ("Среднее расстояние от начальной точки","mean_distance_from_start", False, constant_stub),
-        ("Максимальное удаление от начальной точки","max_distance_from_start_line", True, constant_stub),
-        ("Количество пересечений с начальной точкой","start_point_crossings", False, constant_stub),
-        ("Общее время движения","total_time", False, constant_stub),
-        ("Соотношение перемещения к длине пути","displacement_to_path_ratio", False, constant_stub),
+        ("Расстояние между точками (перемещение)", "distance", True, calc_dist),
+        ("Длина пути блуждания", "displacement_to_path_ratio", False, calc_path_length),
+        ("Максимальное расстояние между точками", "max_distance", True, calc_max_distance_between_points),
+        ("Радиус блуждания от начала","max_distance_from_start_radius", True, calc_max_distance_from_start_point),
+        ("Центр масс","center_of_mass", True, center_of_mass),
+        ("Количество повторяющихся точек","repeat_points", True, calc_repeat_points),
+        ("Угол между началом и концом блуждания","average_direction", True, angle_between_start_end_point),
+        ("Радиус размаха траектории","convex_radius", True, calc_convex_radius),
+        ("Средний квадрат перемещения","mean_squared_displacement", False, calc_msd),
+        ("Среднее направление движения","average_direction", True, calc_average_direction),
+        ("Средняя длина шага между точками","total_time", False, calc_average_step),
+        ("Эффективность движения","displacement_to_path_ratio", False, calc_efficiency_ratio),
+        ("Количество значимых поворотов", "total_time", False, count_turns),
+        ("Средний угол поворота", "total_time", False, mean_angles),
     ]
 
     # Создание пустого списка для объектов метрик
@@ -598,7 +798,7 @@ def create_metrics_frame(parent):
 
     # Создание чек-бокса "Выбрать всё" и задание его расположения
     all_check_metrics = ttk.Checkbutton(frame, text="Check all metrics", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
-    all_check_metrics.grid(row=len(metrics_info), column=0, sticky="w", columnspan=3, pady=8)
+    all_check_metrics.grid(row=len(metrics_info), column=0, sticky="w", columnspan=5)
 
 
     return label, frame, list(metrics_object_list)
@@ -607,7 +807,7 @@ def create_metrics_frame(parent):
 # Создание главного окна
 root = tk.Tk()
 root.title("Случайное блуждание")
-root.geometry("500x770+100+100")
+root.geometry("500x800+100+100")
 root.resizable(False, False)
 
 # Создание пустых словарей фреймов с дополнительными настройками и заголовков для них
@@ -734,7 +934,7 @@ repeat_check.grid(row=0, column=2, sticky='w', padx=5, pady=2)
 
 # Создание кнопки для начала построения графиков
 button = ttk.Button(root, text = "Create New", command=lambda: build_graphs(metrics_object_list), state=tk.DISABLED)
-button.pack(side='bottom', pady=10)
+button.pack(side='bottom', pady=7)
 
 
 # Динамическое отображение нужного дополнительного фрейма в зависимости от выбора пользователя
