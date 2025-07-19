@@ -80,12 +80,12 @@ def build_static_graph(metrics_object_list):
             plt.scatter(rw.x_values, rw.y_values, c=points_color, edgecolors='none',
                         s=size_points)
 
-        # Отрисовка увеличенных начальной и конечной точек блуждания
-        plt.scatter(0, 0, c='green', edgecolors='none', s=100)
-        plt.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100)
-        # Отрисовка линии между начальной и конечной точками
-        plt.plot([0, rw.x_values[-1]], [0, rw.y_values[-1]], c='red', linestyle='--', linewidth=3,
-             label='Line between points')
+        ## Отрисовка увеличенных начальной и конечной точек блуждания
+        #plt.scatter(0, 0, c='green', edgecolors='none', s=100)
+        #plt.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100)
+        ## Отрисовка линии между начальной и конечной точками
+        #plt.plot([0, rw.x_values[-1]], [0, rw.y_values[-1]], c='red', linestyle='--', linewidth=3,
+        #     label='Line between points')
 
         # Отрисовка информации о расстоянии между начальной и конечной точками
         plt.text(0.5, -0.1, f'Расстояние между точками блуждания: {distance:.2f}', fontsize=12, ha='center',
@@ -104,12 +104,12 @@ def build_static_graph(metrics_object_list):
         # Создание линейной диаграммы с вычисленными точками для X, Y
         plt.plot(rw.x_values, rw.y_values, c=line_color, linewidth = line_size, zorder =1)
 
-        # Отрисовка увеличенных начальной и конечной точек блуждания
-        plt.scatter(0, 0, c='green', edgecolors='none', s=100, zorder =2)
-        plt.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder =2)
-        # Отрисовка линии между начальной и конечной точками
-        plt.plot([0, rw.x_values[-1]], [0, rw.y_values[-1]], c='red', linestyle='--', linewidth=3,
-                 label='Line between points')
+       ## Отрисовка увеличенных начальной и конечной точек блуждания
+       #plt.scatter(0, 0, c='green', edgecolors='none', s=100, zorder =2)
+       #plt.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder =2)
+       ## Отрисовка линии между начальной и конечной точками
+       #plt.plot([0, rw.x_values[-1]], [0, rw.y_values[-1]], c='red', linestyle='--', linewidth=3,
+       #         label='Line between points')
         # Отрисовка информации о расстоянии между начальной и конечной точками
         plt.text(0.5, -0.1, f'Расстояние между точками блуждания: {distance:.2f}', fontsize=12, ha='center',
                  va='center', transform=plt.gca().transAxes)
@@ -311,17 +311,24 @@ def create_window_for_figure(metrics_var, metrics_object_list, rw):
     if metrics_var.get() and any(m.enabled_var.get() for m in metrics_object_list):
         # Создание окна графика и осей
         fig, ax = plt.subplots(figsize=(12, 5))
+        ax.set_aspect('equal')
         # Отбираем выбранные пользователем метрики
         enabled_metrics = [m for m in metrics_object_list if m.enabled_var.get()]
         # Получаем текст выбранных пользователем метрик
         metrics_text = '\n\n'.join(f'{m.label}' for m in enabled_metrics)
         # Получаем значения выбранных пользователем метрик
-        metrics_value = '\n\n'.join(str(m.calc_func(rw)) if callable(m.calc_func) else "...None" for m in enabled_metrics)
+        metrics_value = '\n\n'.join(str(m.calc_func(ax, rw, m.show_var.get())) if callable(m.calc_func) else "...None" for m in enabled_metrics)
         # plt.sca(ax)
         fig.text(0.75, 0.92, "Расчёт метрик", fontsize=12, va='top', ha='left')
         fig.text(0.62, 0.85, metrics_text, fontsize=9, va='top', ha='left', family='monospace')
         fig.text(0.95, 0.85, metrics_value, fontsize=9, va='top', ha='right', family='monospace')
         plt.subplots_adjust(right=0.6)
+
+        ## Отрисовка графических представлений метрик
+        #for metric in enabled_metrics:
+        #    if hasattr(metric, 'show_var') and metric.show_var.get():
+        #        if metric.draw_func and callable(metric.draw_func):
+        #            metric.draw_func(ax, rw)
     else:
         fig, ax = plt.subplots(figsize=(8, 6))
 
@@ -531,23 +538,53 @@ def constant_stub(rw):
     """Функция-заглушка для результатов метрик"""
     return "...None"
 
-def calc_dist(rw):
+def calc_dist(ax, rw, show_var):
     """Функция подсчета расстояния между начальной и конечной точками блуждания"""
     distance = round(math.sqrt((rw.x_values[-1] - rw.x_values[0]) ** 2 + (rw.y_values[-1] - rw.y_values[0]) ** 2), 2)
+
+    if show_var:
+        draw_dist(ax, rw)
     return distance
 
 
-def calc_max_distance_between_points(rw):
+def draw_dist(ax, rw):
+    """Рисует линию между начальной и конечной точками"""
+    ax.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=2)
+    ax.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder=2)
+    ax.plot([0, rw.x_values[-1]], [0, rw.y_values[-1]], c='red', linestyle='--', linewidth=3,
+            label='Line between points')
+
+
+def calc_max_distance_between_points(ax, rw, show_var):
     """Функция подсчета максимального расстояния между точками"""
     max_dist = 0
+    p1 = (rw.x_values[0], rw.y_values[0])
+    p2 = (rw.x_values[0], rw.y_values[0])
+
     for i in range(len(rw.x_values)):
         for j in range(i+1, len(rw.x_values)):
             dist = math.hypot(rw.x_values[i]-rw.x_values[j], rw.y_values[i]-rw.y_values[j])
-            max_dist = max(max_dist, dist)
+
+            if dist > max_dist:
+                max_dist = dist
+                p1 = (rw.x_values[i], rw.y_values[i])
+                p2 = (rw.x_values[j], rw.y_values[j])
+
+    if show_var:
+        draw_max_dist(ax, rw, p1, p2)
+
     return round(max_dist, 2)
 
 
-def calc_max_distance_from_start_point(rw):
+def draw_max_dist(ax, rw, p1, p2):
+    """Рисует линию между максимально удалёнными точками"""
+    ax.scatter(*p1, c='green', edgecolors='none', s=100, zorder=2)
+    ax.scatter(*p2, c='orange', edgecolors='none', s=100, zorder=2)
+    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], c='yellow', linestyle='-', linewidth=3,
+            label='Line between points')
+
+
+def calc_max_distance_from_start_point(ax, rw, show_var):
     """Функция подсчета радиуса блуждания"""
     max_dist = 0
     x0, y0 =  rw.x_values[0], rw.y_values[0]
@@ -557,21 +594,21 @@ def calc_max_distance_from_start_point(rw):
     return round(max_dist, 2)
 
 
-def center_of_mass(rw):
+def center_of_mass(ax, rw, show_var):
     """Функция подсчёта координат центра масс"""
     x_avg = sum(rw.x_values)/len(rw.x_values)
     y_avg = sum(rw.y_values)/len(rw.y_values)
     return f"({x_avg:.2f},{y_avg:.2f})"
 
 
-def calc_repeat_points(rw):
+def calc_repeat_points(ax, rw, show_var):
     """Функция подсчёта кол-ва повторяющихся точек"""
     points = list(zip(rw.x_values, rw.y_values))
     count_repeat_points = len(points) - len(set(points))
     percent_repeat_points = count_repeat_points/len(points)*100
     return f"{count_repeat_points} ({percent_repeat_points:.2f}%)"
 
-def calc_repeat_start_point(rw):
+def calc_repeat_start_point(ax, rw, show_var):
     """Функция подсчета кол-ва возвратов в начальную точку"""
     x0, y0 = rw.x_values[0], rw.y_values[0]
     repeats = 0
@@ -582,7 +619,7 @@ def calc_repeat_start_point(rw):
     return repeats
 
 
-def angle_between_start_end_point(rw):
+def angle_between_start_end_point(ax, rw, show_var):
     """Функция вычисления угла между начальной и конечной точками"""
     dx_total = rw.x_values[-1] - rw.x_values[0]
     dy_total = rw.y_values[-1] - rw.y_values[0]
@@ -591,7 +628,7 @@ def angle_between_start_end_point(rw):
     return round(angle_deg, 2)
 
 
-def calc_average_direction(rw):
+def calc_average_direction(ax, rw, show_var):
     """Функция вычисления среднего направления движения"""
     angles = []
     for i in range(1, len(rw.x_values)):
@@ -604,7 +641,7 @@ def calc_average_direction(rw):
     return round(math.degrees(average_angle_rad), 2)
 
 
-def calc_convex_radius(rw):
+def calc_convex_radius(ax, rw, show_var):
     """Функция вычисления радиуса охвата от центра масс"""
     max_radius = 0.0
     x_avg = sum(rw.x_values)/len(rw.x_values)
@@ -616,7 +653,7 @@ def calc_convex_radius(rw):
     return round(max_radius, 2)
 
 
-def calc_msd(rw):
+def calc_msd(ax, rw, show_var):
     """Функция подсчёта среднего квадрата перемещения"""
     x0, y0 = rw.x_values[0], rw.y_values[0]
 
@@ -631,7 +668,7 @@ def calc_msd(rw):
     return round(msd, 2)
 
 
-def calc_path_length(rw):
+def calc_path_length(ax, rw, show_var):
     """Функция вычисления длины пути блуждания"""
     if len(rw.x_values) < 2:
         return 0.0
@@ -646,12 +683,12 @@ def calc_path_length(rw):
     return round(total_length, 2)
 
 
-def calc_efficiency_ratio(rw):
+def calc_efficiency_ratio(ax, rw, show_var):
     """Вычисляет отношение перемещения к длине пути (эффективность движения)"""
     if len(rw.x_values) < 2:
         return None
-    total_length = calc_path_length(rw)
-    displacement = calc_dist(rw)
+    total_length = calc_path_length(ax, rw, show_var)
+    displacement = calc_dist(ax, rw, show_var)
 
     if total_length > 0:
         efficiency = displacement/total_length
@@ -663,7 +700,7 @@ def calc_efficiency_ratio(rw):
     return f"{efficiency:.2f} ({eff_percent:.2f}%)"
 
 
-def count_turns(rw):
+def count_turns(ax, rw, show_var):
     """Функция подсчёта значимых поворотов (более 45 град.)в траектории блуждания"""
     angle_threshold = 90
 
@@ -692,7 +729,7 @@ def count_turns(rw):
     return f"{turn_count} ({percent_turn_count:.2f}%)"
 
 
-def mean_angles(rw):
+def mean_angles(ax, rw, show_var):
     """Расчет среднего угла поворота на траектории"""
     if len(rw.x_values) < 3:
         return 0
@@ -717,7 +754,7 @@ def mean_angles(rw):
     mean_angle = sum(angles)/len(angles) if angles else 0
     return round(mean_angle, 2)
 
-def calc_average_step(rw):
+def calc_average_step(ax, rw, show_var):
     """Функция подсчета средней длины шага"""
 
     if len(rw.x_values) < 2:

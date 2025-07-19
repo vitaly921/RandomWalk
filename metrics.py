@@ -14,7 +14,7 @@ class MetricCheckBox:
 
         self.label = label
         self.key = key
-        self.calc_func=calc_func
+        self.calc_func = calc_func
         # Создание булевых переменных-состояний чек-боксов
         self.enabled_var = tk.BooleanVar(value=False)
         self.show_var = tk.BooleanVar(value=True)
