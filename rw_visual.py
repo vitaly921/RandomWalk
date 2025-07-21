@@ -218,9 +218,17 @@ def build_animation(metrics_object_list):
         # Создание списка длиной количества точек
         point_numbers = list(range(rw.num_points))
 
-        fig, ax = plt.subplots(figsize=(12, 5))
-        ax.set_aspect('equal')
-        plt.subplots_adjust(right=0.6)
+        if metrics_var.get() and not repeat_animation and any(m.enabled_var.get() for m in metrics_object_list):
+            fig, ax = plt.subplots(figsize=(12, 5))
+            ax.set_aspect('equal')
+            plt.subplots_adjust(right=0.6)
+        elif repeat_animation:
+            fig, ax = plt.subplots(figsize=(12, 5))
+            #ax.set_aspect('equal')
+            plt.subplots_adjust(right=0.6)
+            create_window_for_figure(metrics_var, metrics_object_list, rw, fig, ax)
+        else:
+            fig, ax = plt.subplots(figsize=(8, 6))
 
 
 
@@ -347,10 +355,6 @@ def create_window_for_figure(metrics_var, metrics_object_list, rw, fig=None, ax=
         #    if hasattr(metric, 'show_var') and metric.show_var.get():
         #        if metric.draw_func and callable(metric.draw_func):
         #            metric.draw_func(ax, rw)
-    else:
-        pass
-        #fig, ax = plt.subplots(figsize=(8, 6))
-
     return fig, ax
 
 
@@ -791,6 +795,20 @@ def calc_average_step(ax, rw, show_var):
     return round(average_length, 2)
 
 
+def on_repeat_toggle():
+    """"""
+    repeat_value = repeat_var.get()
+    #print("Hello")
+    for metric in metrics_object_list:
+        if metric.checkbox_show:  # Проверяем, есть ли у метрики этот чекбокс
+            if repeat_value:
+                metric.checkbox_show.config(state='disabled')
+                metric.show_var.set(False)
+            elif not repeat_value and metric.enabled_var.get():
+                metric.checkbox_show.config(state='normal')
+
+
+
 def create_metrics_frame(parent):
     """Функция создания динамического окна с метриками"""
     # Создание надписи для окна с метриками
@@ -837,7 +855,7 @@ def create_metrics_frame(parent):
     # Для каждой метрики из списка
     for i, (label_text, key, show_flag, calc_func) in enumerate(metrics_info):
         # Создание объекта метрики через класс
-        metric = MetricCheckBox(frame, label_text, i, show_flag, key=key, calc_func=calc_func, on_toggle_callback=on_any_metrics_toggle)
+        metric = MetricCheckBox(frame, label_text, i, show_flag, repeat_var, key=key, calc_func=calc_func, on_toggle_callback=on_any_metrics_toggle)
         # Добавление объекта в список
         metrics_object_list.append(metric)
 
@@ -850,7 +868,9 @@ def create_metrics_frame(parent):
         # Для каждого объекта метрики из списка обновить состояние для чек-боксов
         for metric in metrics_object_list:
             metric.update_states(enable=all_selected, show=all_selected)
-
+            #metric.show_var.set(True)
+        #repeat_var.set(False)
+        #on_repeat_toggle()
 
     # Создание чек-бокса "Выбрать всё" и задание его расположения
     all_check_metrics = ttk.Checkbutton(frame, text="Check all metrics", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
@@ -987,6 +1007,8 @@ animation_radio.grid(row=0, column=1, sticky='w', padx=5, pady=2)
 # Отрисовка чек-бокса повтора анимации в выбранной части фрейма
 repeat_check = ttk.Checkbutton(frame, text="Repeating", variable=repeat_var)
 repeat_check.grid(row=0, column=2, sticky='w', padx=5, pady=2)
+
+repeat_var.trace_add('write', lambda *args: on_repeat_toggle())
 
 # Создание кнопки для начала построения графиков
 button = ttk.Button(root, text = "Create New", command=lambda: build_graphs(metrics_object_list), state=tk.DISABLED)

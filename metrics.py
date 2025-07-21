@@ -3,7 +3,7 @@ from tkinter import ttk, SOLID
 
 class MetricCheckBox:
     """Класс для создания пары чек-боксов, управляющих выбором метрики и её отображения на графике"""
-    def __init__(self, parent, label, row, show_flag, key=None, calc_func=None, on_toggle_callback=None):
+    def __init__(self, parent, label, row, show_flag, repeat_var, key=None, calc_func=None, on_toggle_callback=None):
         """Функция инициализации
         - основного чек-бокса для включения-выключения метрики;
         - дополнительного чек-бокса для отображения включенной метрики на графике
@@ -15,9 +15,10 @@ class MetricCheckBox:
         self.label = label
         self.key = key
         self.calc_func = calc_func
+        self.repeat_var = repeat_var
         # Создание булевых переменных-состояний чек-боксов
         self.enabled_var = tk.BooleanVar(value=False)
-        self.show_var = tk.BooleanVar(value=True)
+        self.show_var = tk.BooleanVar(value=False)
         self.on_toggle_callback = on_toggle_callback
 
         # Создание чек-боксов для включения-выключения чек-бокса метрики и её отображения на графике
@@ -26,7 +27,6 @@ class MetricCheckBox:
         self.checkbox_enabled.grid(row=row, column=0, sticky='w', padx=(0, 60))
 
         if show_flag:
-
             self.checkbox_show = ttk.Checkbutton(parent, text="Показать на графике", variable=self.show_var)
             # Чек-бокс отображения метрики на графике по-умолчанию отключен
             self.checkbox_show.config(state="disabled")
@@ -49,7 +49,9 @@ class MetricCheckBox:
             if self.enabled_var.get():
                 self.checkbox_show.config(state="normal")
                 self.show_var.set(True)
+                self.repeat_var.set(False)
             else:
+                print("hello")
                 self.checkbox_show.config(state="disabled")
                 self.show_var.set(False)
 
