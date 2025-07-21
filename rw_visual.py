@@ -218,7 +218,7 @@ def build_animation(metrics_object_list):
         # Создание списка длиной количества точек
         point_numbers = list(range(rw.num_points))
 
-        if metrics_var.get() and  not repeat_animation and any(m.enabled_var.get() for m in metrics_object_list):
+        if metrics_var.get() and not repeat_animation and any(m.enabled_var.get() for m in metrics_object_list):
             fig, ax = plt.subplots(figsize=(12, 5))
             ax.set_aspect('equal')
             plt.subplots_adjust(right=0.6)
