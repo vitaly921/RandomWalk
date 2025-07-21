@@ -218,7 +218,13 @@ def build_animation(metrics_object_list):
         # Создание списка длиной количества точек
         point_numbers = list(range(rw.num_points))
 
-        fig, ax = create_window_for_figure(metrics_var, metrics_object_list, rw)
+        fig, ax = plt.subplots(figsize=(12, 5))
+        ax.set_aspect('equal')
+        plt.subplots_adjust(right=0.6)
+
+
+
+
 
 
         #table_ax = fig.add_axes([0.65, 0.25, 0.3, 0.5])
@@ -243,9 +249,16 @@ def build_animation(metrics_object_list):
         # Установка границ осей
         ax.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
         ax.set_ylim(min(rw.y_values) - 1, max(rw.y_values) + 1)
+
+        ax2 = fig.add_axes(ax.get_position(), frameon=False)
+        ax2.set_xlim(ax.get_xlim())
+        ax2.set_ylim(ax.get_ylim())
+        ax2.set_xticks([])
+        ax2.set_yticks([])
+        ax2.patch.set_alpha(0)
         # Создание начальных точек
         #points, = ax.plot([], [], 'ro', markersize=(size_points**0.5))
-        current_point, = ax.plot(rw.x_values[0], rw.y_values[0], 'ro')
+        current_point, = ax.plot(rw.x_values[0], rw.y_values[0], 'ro', lw=1)
 
         # Отрисовка увеличенных начальной и конечной точек блуждания
         start_point = plt.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=2)
@@ -257,15 +270,16 @@ def build_animation(metrics_object_list):
 
         # Обработка случая отображения с цветовой картой
         if colormap_mode:
-            points = ax.scatter([], [], c=[], s=size_points, cmap=points_colormap, norm=plt.Normalize(vmin=0, vmax=len(point_numbers)))
+            points = ax.scatter([], [], c=[], s=size_points, cmap=points_colormap, norm=plt.Normalize(vmin=0, vmax=len(point_numbers)), lw=1)
         # Обработка случая отображения без цветовой карты
         else:
-            points = ax.scatter([], [], s=size_points, color=points_color)
+            points = ax.scatter([], [], s=size_points, color=points_color, lw=1)
 
         def init_points():
             """Функция инициализации"""
             # Установка пустых кадров для точек
-            points.set_offsets([])
+            points.set_offsets(np.empty((0, 2)))
+            points.set_zorder(1)
             # Для случая отображения с цветовой картой
             if colormap_mode:
                 points.set_array([])
@@ -281,6 +295,7 @@ def build_animation(metrics_object_list):
                 # Обновление вида точек от начала и до текущего кадра
                 #points.set_offsets([[x, y] for x, y in zip(rw.x_values[:frame+1], rw.y_values[:frame+1])])
                 points.set_offsets(np.column_stack((rw.x_values[:frame+1], rw.y_values[:frame+1])))
+
                 # Для случая отображения с цветовой картой
                 if colormap_mode:
                     points.set_array(np.array(point_numbers[:frame+1]))
@@ -288,11 +303,13 @@ def build_animation(metrics_object_list):
                 current_point.set_data([rw.x_values[frame]], [rw.y_values[frame]])
 
                 if not repeat_animation and frame == len(rw.x_values)-1:
-                    distance_line_for_points_graph.set_data([0, rw.x_values[-1]], [0, rw.y_values[-1]])
-                    start_point.set_offsets([[0,0]])
-                    end_point.set_offsets([[rw.x_values[-1], rw.y_values[-1]]])
+                    create_window_for_figure(metrics_var, metrics_object_list, rw, fig, ax2)
+                    fig.canvas.draw()
+                    #distance_line_for_points_graph.set_data([0, rw.x_values[-1]], [0, rw.y_values[-1]])
+                    #start_point.set_offsets([[0,0]])
+                    #end_point.set_offsets([[rw.x_values[-1], rw.y_values[-1]]])
                 return points, current_point, distance_line_for_points_graph, start_point, end_point
-
+            points.set_zorder(1)
             return update_points
             # Управление анимацией
         animation_points = animation.FuncAnimation(fig, update_create_point_function(repeat_animation), frames = len(rw.x_values),
@@ -305,13 +322,14 @@ def build_animation(metrics_object_list):
     # Отображение выбранных окон
     plt.show()
 
-def create_window_for_figure(metrics_var, metrics_object_list, rw):
+
+def create_window_for_figure(metrics_var, metrics_object_list, rw, fig=None, ax=None):
     """Функция создания окна для графика"""
     # В зависимости от выбора дополнительных метрик определяется размер и наполнение окна
     if metrics_var.get() and any(m.enabled_var.get() for m in metrics_object_list):
         # Создание окна графика и осей
-        fig, ax = plt.subplots(figsize=(12, 5))
-        ax.set_aspect('equal')
+        #fig, ax = plt.subplots(figsize=(12, 5))
+        #ax.set_aspect('equal')
         # Отбираем выбранные пользователем метрики
         enabled_metrics = [m for m in metrics_object_list if m.enabled_var.get()]
         # Получаем текст выбранных пользователем метрик
@@ -322,7 +340,7 @@ def create_window_for_figure(metrics_var, metrics_object_list, rw):
         fig.text(0.75, 0.92, "Расчёт метрик", fontsize=12, va='top', ha='left')
         fig.text(0.62, 0.85, metrics_text, fontsize=9, va='top', ha='left', family='monospace')
         fig.text(0.95, 0.85, metrics_value, fontsize=9, va='top', ha='right', family='monospace')
-        plt.subplots_adjust(right=0.6)
+        #plt.subplots_adjust(right=0.6)
 
         ## Отрисовка графических представлений метрик
         #for metric in enabled_metrics:
@@ -330,7 +348,8 @@ def create_window_for_figure(metrics_var, metrics_object_list, rw):
         #        if metric.draw_func and callable(metric.draw_func):
         #            metric.draw_func(ax, rw)
     else:
-        fig, ax = plt.subplots(figsize=(8, 6))
+        pass
+        #fig, ax = plt.subplots(figsize=(8, 6))
 
     return fig, ax
 
@@ -549,10 +568,10 @@ def calc_dist(ax, rw, show_var):
 
 def draw_dist(ax, rw):
     """Рисует линию между начальной и конечной точками"""
-    ax.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=2)
-    ax.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder=2)
+    ax.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=1)
+    ax.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder=1)
     ax.plot([0, rw.x_values[-1]], [0, rw.y_values[-1]], c='red', linestyle='--', linewidth=3,
-            label='Line between points')
+            label='Line between points', zorder=10)
 
 
 def calc_max_distance_between_points(ax, rw, show_var):
@@ -578,10 +597,10 @@ def calc_max_distance_between_points(ax, rw, show_var):
 
 def draw_max_dist(ax, rw, p1, p2):
     """Рисует линию между максимально удалёнными точками"""
-    ax.scatter(*p1, c='green', edgecolors='none', s=100, zorder=2)
-    ax.scatter(*p2, c='orange', edgecolors='none', s=100, zorder=2)
+    ax.scatter(*p1, c='green', edgecolors='none', s=100, zorder=9)
+    ax.scatter(*p2, c='orange', edgecolors='none', s=100, zorder=9)
     ax.plot([p1[0], p2[0]], [p1[1], p2[1]], c='yellow', linestyle='-', linewidth=3,
-            label='Line between points')
+            label='Line between points', zorder=10)
 
 
 def calc_max_distance_from_start_point(ax, rw, show_var):
