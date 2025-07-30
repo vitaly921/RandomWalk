@@ -60,7 +60,15 @@ def build_static_graph(metrics_object_list):
     # Если выбран точечный график
     if points_var.get():
         # Задание размера окна для точечного графика
-        create_window_for_figure(metrics_var, metrics_object_list, rw)
+        if metrics_var.get() and any(m.enabled_var.get() for m in metrics_object_list):
+            fig, ax = plt.subplots(figsize=(12, 5))
+            ax.set_aspect('equal')
+            # Задание отступа для графика
+            plt.subplots_adjust(right=0.6)
+        else:
+            fig, ax = plt.subplots(figsize=(8, 6))
+        create_window_for_figure(metrics_var, metrics_object_list, rw, fig, ax)
+
         plt.title("График случайного блуждания точек")
         # Получение пользовательского значения размера точек
         size_points = int(points_size_var.get())
@@ -80,22 +88,19 @@ def build_static_graph(metrics_object_list):
             plt.scatter(rw.x_values, rw.y_values, c=points_color, edgecolors='none',
                         s=size_points)
 
-        ## Отрисовка увеличенных начальной и конечной точек блуждания
-        #plt.scatter(0, 0, c='green', edgecolors='none', s=100)
-        #plt.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100)
-        ## Отрисовка линии между начальной и конечной точками
-        #plt.plot([0, rw.x_values[-1]], [0, rw.y_values[-1]], c='red', linestyle='--', linewidth=3,
-        #     label='Line between points')
-
-        # Отрисовка информации о расстоянии между начальной и конечной точками
-        plt.text(0.5, -0.1, f'Расстояние между точками блуждания: {distance:.2f}', fontsize=12, ha='center',
-                 va='center', transform=plt.gca().transAxes)
-
 
     # Если выбран линейный график
     if line_var.get():
-        # Задание размера окна для линейного графика
-        create_window_for_figure(metrics_var, metrics_object_list, rw)
+        # Задание размера окна для точечного графика
+        if metrics_var.get() and any(m.enabled_var.get() for m in metrics_object_list):
+            fig, ax = plt.subplots(figsize=(12, 5))
+            ax.set_aspect('equal')
+            # Задание отступа для графика
+            plt.subplots_adjust(right=0.6)
+        else:
+            fig, ax = plt.subplots(figsize=(8, 6))
+
+        create_window_for_figure(metrics_var, metrics_object_list, rw, fig, ax)
         plt.title("График случайного блуждания линии")
         # Получение пользовательского значения ширины линии
         line_color = line_color_var.get()
@@ -104,15 +109,6 @@ def build_static_graph(metrics_object_list):
         # Создание линейной диаграммы с вычисленными точками для X, Y
         plt.plot(rw.x_values, rw.y_values, c=line_color, linewidth = line_size, zorder =1)
 
-       ## Отрисовка увеличенных начальной и конечной точек блуждания
-       #plt.scatter(0, 0, c='green', edgecolors='none', s=100, zorder =2)
-       #plt.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder =2)
-       ## Отрисовка линии между начальной и конечной точками
-       #plt.plot([0, rw.x_values[-1]], [0, rw.y_values[-1]], c='red', linestyle='--', linewidth=3,
-       #         label='Line between points')
-        # Отрисовка информации о расстоянии между начальной и конечной точками
-        plt.text(0.5, -0.1, f'Расстояние между точками блуждания: {distance:.2f}', fontsize=12, ha='center',
-                 va='center', transform=plt.gca().transAxes)
 
     # Отображение графиков независимо от выбора
     plt.show(block=False)
@@ -120,6 +116,9 @@ def build_static_graph(metrics_object_list):
     # Удаление осей X,Y
     #plt.axes().get_xaxis().set_visible(False)
     #plt.axes().get_yaxis().set_visible(False)
+
+
+
 
 
 def build_animation(metrics_object_list):
@@ -146,6 +145,24 @@ def build_animation(metrics_object_list):
     rw.fill_walk()
     animations = []
 
+    def is_graphical_metrics_enabled(metrics_object_list):
+        """Вспомогательная функция для задания условия: чек-бокс метрик включен, повтор выключен,
+         учитывается отрисовка выбранных пользователем метрик"""
+        return(
+                metrics_var.get() and
+                not repeat_animation and
+                any(m.enabled_var.get() for m in metrics_object_list) and
+                any(m.show_var.get() for m in metrics_object_list)
+        )
+
+    def is_text_metrics_enabled(metrics_object_list):
+        """Вспомогательная функция для задания условия: чек-бокс метрик включен, повтор включен или выключен,
+        не учитывается отрисовка выбранных пользователем метрик"""
+        return(
+            (metrics_var.get() and repeat_animation and any(m.enabled_var.get() for m in metrics_object_list)) or
+            (metrics_var.get() and not repeat_animation and all(not m.show_var.get() for m in metrics_object_list))
+        )
+
     # Если выбрана анимация линий
     if line_var.get():
         # Получение пользовательских значений цвета линии
@@ -153,22 +170,40 @@ def build_animation(metrics_object_list):
         # Получение пользовательских значений ширины линии
         line_size = line_size_var.get()
 
-        # Создание окна графика и осей
-        fig, ax = create_window_for_figure(metrics_var, metrics_object_list, rw)
+        # Если чек-бокс "Additional metrics" активен и нет повтора, и выбраны какие-либо метрики пользователем с
+        # чек-боксом "Показать на графике"
+        if is_graphical_metrics_enabled(metrics_object_list):
+            print("qwertttttttttttttttttttty")
+            # Задание увеличенного размера окна
+            fig_line, ax_line = plt.subplots(figsize=(12, 5))
+            # Задание равного масштаба на осях для наглядности графического представления метрик
+            ax_line.set_aspect('equal')
+            # Задание отступа для графика
+            plt.subplots_adjust(right=0.6)
+        # Иначе если чек-бокс "Additional metrics" активен, и выбраны какие-либо метрики пользователем без
+        # выбора чек-бокса "Показать на графике" и независимо от повтора
+        elif is_text_metrics_enabled(metrics_object_list):
+            print("qwerty")
+            # Задание увеличенного размера окна
+            fig_line, ax_line = plt.subplots(figsize=(12, 5))
+            # Задание равного масштаба на осях для наглядности графического представления метрик (отключено здесь)
+            # ax.set_aspect('equal')
+            # Задание отступа для графика
+            plt.subplots_adjust(right=0.6)
+            # Сразу отображаются метрики справа без графического представления на графике
+            create_window_for_figure(metrics_var, metrics_object_list, rw, fig_line, ax_line)
+        # Для остальных случаев график отображается в усечённом окне без масштабирования
+        else:
+            # Задание усечённого размера окна
+            fig_line, ax_line = plt.subplots(figsize=(8, 6))
 
         # Установка границ осей
-        ax.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
-        ax.set_ylim(min(rw.y_values) - 1, max(rw.y_values) + 1)
+        ax_line.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
+        ax_line.set_ylim(min(rw.y_values) - 1, max(rw.y_values) + 1)
 
         # Создание начальной точки и линии
-        current_point_for_lines, = ax.plot(rw.x_values[0], rw.y_values[0], 'ro')
-        line, = ax.plot([], [], c=line_color, linewidth=line_size)
-        # Отрисовка увеличенных начальной и конечной точек блуждания
-        start_point_for_line = plt.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=2)
-        end_point_for_line = plt.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder=2)
-        # Отрисовка линии между начальной и конечной точками
-        distance_line, = ax.plot([],[], c='red', linestyle='--', linewidth=3,
-                 label='Line between points')
+        current_point_for_lines, = ax_line.plot(rw.x_values[0], rw.y_values[0], 'ro')
+        line, = ax_line.plot([], [], c=line_color, linewidth=line_size)
 
 
         def init_line():
@@ -176,11 +211,8 @@ def build_animation(metrics_object_list):
             # Установка пустых кадров для линий и точки
             line.set_data([],[])
             current_point_for_lines.set_data([], [])
-            distance_line.set_data([], [])
-            start_point_for_line.set_offsets(np.empty((0, 2)))
-            end_point_for_line.set_offsets(np.empty((0, 2)))
             # Возврат кортежей с объектами линий и точки
-            return line, current_point_for_lines, distance_line, start_point_for_line, end_point_for_line
+            return line, current_point_for_lines
 
         def create_update_line_function(repeat_animation):
             def update_line(frame):
@@ -190,15 +222,17 @@ def build_animation(metrics_object_list):
                 # Обновление вида точки на текущем кадре
                 current_point_for_lines.set_data([rw.x_values[frame]], [rw.y_values[frame]])
 
-                if not repeat_animation and frame == len(rw.x_values)-1:
-                    distance_line.set_data([0, rw.x_values[-1]], [0, rw.y_values[-1]])
-                    start_point_for_line.set_offsets([[0,0]])
-                    end_point_for_line.set_offsets([[rw.x_values[-1], rw.y_values[-1]]])
+                # Если чек-бокс "Additional metrics" активен и нет повтора, и выбраны какие-либо метрики пользователем с
+                # чек-боксом "Показать на графике" и сейчас строится последний кадр
+                if is_graphical_metrics_enabled(metrics_object_list) and frame == len(rw.x_values) - 1:
+                    # Отрисовка метрик с графическим представлением
+                    create_window_for_figure(metrics_var, metrics_object_list, rw, fig_line, ax_line)
+                    fig_line.canvas.draw()
                 # Возврат кортежей с объектами линий и точки
-                return line, current_point_for_lines, distance_line, start_point_for_line, end_point_for_line
+                return line, current_point_for_lines
             return update_line
         # Управление анимацией
-        animation_line = animation.FuncAnimation(fig, create_update_line_function(repeat_animation), frames=len(rw.x_values), init_func=init_line, blit=
+        animation_line = animation.FuncAnimation(fig_line, create_update_line_function(repeat_animation), frames=len(rw.x_values), init_func=init_line, blit=
                                                  True, interval=0, repeat=repeat_animation)
         animations.append(animation_line)
         # Установка заголовка для окна с анимацией
@@ -218,70 +252,47 @@ def build_animation(metrics_object_list):
         # Создание списка длиной количества точек
         point_numbers = list(range(rw.num_points))
 
-        if metrics_var.get() and not repeat_animation and any(m.enabled_var.get() for m in metrics_object_list):
-            fig, ax = plt.subplots(figsize=(12, 5))
-            ax.set_aspect('equal')
+        # Если чек-бокс "Additional metrics" активен и нет повтора, и выбраны какие-либо метрики пользователем с
+        # чек-боксом "Показать на графике"
+        if is_graphical_metrics_enabled(metrics_object_list):
+            # Задание увеличенного размера окна
+            fig_point, ax_point = plt.subplots(figsize=(12, 5))
+            # Задание равного масштаба на осях для наглядности графического представления метрик
+            ax_point.set_aspect('equal')
+            # Задание отступа для графика
             plt.subplots_adjust(right=0.6)
-        elif repeat_animation:
-            fig, ax = plt.subplots(figsize=(12, 5))
+        # Иначе если чек-бокс "Additional metrics" активен, и выбраны какие-либо метрики пользователем без выбра
+        # выбора чек-бокса "Показать на графике" и независимо от повтора
+        elif is_text_metrics_enabled(metrics_object_list):
+            # Задание увеличенного размера окна
+            fig_point, ax_point = plt.subplots(figsize=(12, 5))
+            # Задание равного масштаба на осях для наглядности графического представления метрик (отключено здесь)
             #ax.set_aspect('equal')
+            # Задание отступа для графика
             plt.subplots_adjust(right=0.6)
-            create_window_for_figure(metrics_var, metrics_object_list, rw, fig, ax)
+            # Сразу отображаются метрики справа без графического представления на графике
+            create_window_for_figure(metrics_var, metrics_object_list, rw, fig_point, ax_point)
+        # Для остальных случаев график отображается в усечённом окне без масштабирования
         else:
-            fig, ax = plt.subplots(figsize=(8, 6))
-
-
-
-
-
-
-        #table_ax = fig.add_axes([0.65, 0.25, 0.3, 0.5])
-        #table_ax.axis("off")
-        #table = Table(table_ax, bbox=[0, 0, 1, 1])
-        ##table = ax.table(cellText=table_data, colLabels=["Метрика", "Значение"], loc="right")
-        #cell = table.add_cell(0, 0, 0.5, 0.05, text = "Метрика", loc='center', facecolor='lightgray')
-        #cell.get_text().set_fontsize(20)
-        #cell= table.add_cell(0, 1, 0.5, 0.05, text="Значение", loc='center', facecolor='lightgray')
-        #cell.get_text().set_fontsize(20)
-#
-        #for i, metric in enumerate(enabled_metrics, start=1):
-        #    cell= table.add_cell(i, 0, 0.5, 0.05, text=metric, loc="left")
-        #    cell.get_text().set_fontsize(20)
-        #    cell= table.add_cell(i, 1, 0.5, 0.05, text='---', loc="center")
-        #    cell.get_text().set_fontsize(20)
-#
-        #table_ax.add_table(table)
-
+            # Задание усечённого размера окна
+            fig_point, ax_point = plt.subplots(figsize=(8, 6))
 
 
         # Установка границ осей
-        ax.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
-        ax.set_ylim(min(rw.y_values) - 1, max(rw.y_values) + 1)
+        ax_point.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
+        ax_point.set_ylim(min(rw.y_values) - 1, max(rw.y_values) + 1)
 
-        ax2 = fig.add_axes(ax.get_position(), frameon=False)
-        ax2.set_xlim(ax.get_xlim())
-        ax2.set_ylim(ax.get_ylim())
-        ax2.set_xticks([])
-        ax2.set_yticks([])
-        ax2.patch.set_alpha(0)
         # Создание начальных точек
         #points, = ax.plot([], [], 'ro', markersize=(size_points**0.5))
-        current_point, = ax.plot(rw.x_values[0], rw.y_values[0], 'ro', lw=1)
-
-        # Отрисовка увеличенных начальной и конечной точек блуждания
-        start_point = plt.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=2)
-        end_point = plt.scatter(rw.x_values[-2], rw.y_values[-2], c='orange', edgecolors='none', s=100, zorder=2)
-        # Отрисовка линии между начальной и конечной точками
-        distance_line_for_points_graph, = ax.plot([],[], c='red', linestyle='--', linewidth=3,
-                 label='Line between points')
+        current_point, = ax_point.plot(rw.x_values[0], rw.y_values[0], 'ro', lw=1)
 
 
         # Обработка случая отображения с цветовой картой
         if colormap_mode:
-            points = ax.scatter([], [], c=[], s=size_points, cmap=points_colormap, norm=plt.Normalize(vmin=0, vmax=len(point_numbers)), lw=1)
+            points = ax_point.scatter([], [], c=[], s=size_points, cmap=points_colormap, norm=plt.Normalize(vmin=0, vmax=len(point_numbers)), lw=1)
         # Обработка случая отображения без цветовой карты
         else:
-            points = ax.scatter([], [], s=size_points, color=points_color, lw=1)
+            points = ax_point.scatter([], [], s=size_points, color=points_color, lw=1)
 
         def init_points():
             """Функция инициализации"""
@@ -292,10 +303,7 @@ def build_animation(metrics_object_list):
             if colormap_mode:
                 points.set_array([])
             current_point.set_data([], [])
-            distance_line_for_points_graph.set_data([], [])
-            start_point.set_offsets(np.empty((0, 2)))
-            end_point.set_offsets(np.empty((0, 2)))
-            return points, current_point, distance_line_for_points_graph, start_point, end_point
+            return points, current_point
 
         def update_create_point_function(repeat_animation):
             def update_points(frame):
@@ -309,18 +317,17 @@ def build_animation(metrics_object_list):
                     points.set_array(np.array(point_numbers[:frame+1]))
                 # Обновление вида точки на текущем кадре
                 current_point.set_data([rw.x_values[frame]], [rw.y_values[frame]])
-
-                if not repeat_animation and frame == len(rw.x_values)-1:
-                    create_window_for_figure(metrics_var, metrics_object_list, rw, fig, ax2)
-                    fig.canvas.draw()
-                    #distance_line_for_points_graph.set_data([0, rw.x_values[-1]], [0, rw.y_values[-1]])
-                    #start_point.set_offsets([[0,0]])
-                    #end_point.set_offsets([[rw.x_values[-1], rw.y_values[-1]]])
-                return points, current_point, distance_line_for_points_graph, start_point, end_point
+                # Если чек-бокс "Additional metrics" активен и нет повтора, и выбраны какие-либо метрики пользователем с
+                # чек-боксом "Показать на графике" и сейчас строится последний кадр
+                if is_graphical_metrics_enabled(metrics_object_list) and frame == len(rw.x_values)-1:
+                    # Отрисовка метрик с графическим представлением
+                    create_window_for_figure(metrics_var, metrics_object_list, rw, fig_point, ax_point)
+                    fig_point.canvas.draw()
+                return points, current_point
             points.set_zorder(1)
             return update_points
             # Управление анимацией
-        animation_points = animation.FuncAnimation(fig, update_create_point_function(repeat_animation), frames = len(rw.x_values),
+        animation_points = animation.FuncAnimation(fig_point, update_create_point_function(repeat_animation), frames = len(rw.x_values),
                                                    init_func=init_points, blit=True, interval=0, repeat=repeat_animation)
         animations.append(animation_points)
 
@@ -867,7 +874,7 @@ def create_metrics_frame(parent):
         #print("Toggle:", all_selected)
         # Для каждого объекта метрики из списка обновить состояние для чек-боксов
         for metric in metrics_object_list:
-            metric.update_states(enable=all_selected, show=all_selected)
+            metric.update_states(enable=all_selected, show=False)
             #metric.show_var.set(True)
         #repeat_var.set(False)
         #on_repeat_toggle()
