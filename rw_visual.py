@@ -1,11 +1,16 @@
+from collections import Counter
+
 import matplotlib.pyplot as plt
 import math
 import tkinter as tk
+
+from matplotlib.patches import Circle
 from matplotlib.table import Table
 from tkinter import ttk, SOLID, filedialog
 import matplotlib.animation as animation
 import matplotlib.colors as mcolors
 import numpy as np
+from matplotlib.patches import Arc
 #from fontTools.ttLib.tables.otConverters import Table
 from matplotlib.widgets import Button
 import threading
@@ -276,7 +281,6 @@ def build_animation(metrics_object_list):
         else:
             # Задание усечённого размера окна
             fig_point, ax_point = plt.subplots(figsize=(8, 6))
-
 
         # Установка границ осей
         ax_point.set_xlim(min(rw.x_values) - 1, max(rw.x_values) + 1)
@@ -618,25 +622,72 @@ def calc_max_distance_from_start_point(ax, rw, show_var):
     """Функция подсчета радиуса блуждания"""
     max_dist = 0
     x0, y0 =  rw.x_values[0], rw.y_values[0]
-    for x, y in zip(rw.x_values, rw.x_values):
+    farthest_point = (x0, y0)
+    for x, y in zip(rw.x_values, rw.y_values):
         dist = math.hypot(x-x0, y-y0)
-        max_dist = max(max_dist, dist)
+        if dist > max_dist:
+            max_dist = dist
+            farthest_point = (x, y)
+
+    if show_var:
+        draw_max_distance_from_start_point(ax, x0, y0, max_dist, farthest_point)
     return round(max_dist, 2)
+
+
+def draw_max_distance_from_start_point(ax, x0, y0, radius, farthest_point):
+    """"""
+    circle = plt.Circle((x0, y0), radius, color = 'blue', fill=False, linestyle='--', linewidth=2, zorder=2)
+    ax.add_patch(circle)
+    ax.set_xlim(min(ax.get_xlim()[0], x0 - radius), max(ax.get_xlim()[1], x0 + radius))
+    ax.set_ylim(min(ax.get_ylim()[0], y0 - radius), max(ax.get_ylim()[1], y0 + radius))
+
+    #ax.plot([x0, farthest_point[0]], [y0, farthest_point[1]], color='purple', linestyle='--', linewidth=2, zorder=3)
+
+    ax.scatter([x0], [y0], color='green', s=80, zorder=4, label="Start point")
+    ax.scatter([farthest_point[0]], [farthest_point[1]], color='red', s=80, zorder=4, label="Max from start point")
+
+    ax.legend(loc="upper right", fontsize=8)
 
 
 def center_of_mass(ax, rw, show_var):
     """Функция подсчёта координат центра масс"""
     x_avg = sum(rw.x_values)/len(rw.x_values)
     y_avg = sum(rw.y_values)/len(rw.y_values)
+
+    if show_var:
+        draw_center_of_mass(ax, rw, x_avg, y_avg)
     return f"({x_avg:.2f},{y_avg:.2f})"
+
+
+def draw_center_of_mass(ax, rw, x_avg, y_avg):
+    """"""
+    ax.scatter(x_avg, y_avg, c='purple', s=200, marker='X', zorder=3, label="Center of mass")
+
+    ax.axhline(y=y_avg, color='purple', linestyle='--', linewidth=1)
+    ax.axvline(x=x_avg, color='purple', linestyle='--', linewidth=1)
 
 
 def calc_repeat_points(ax, rw, show_var):
     """Функция подсчёта кол-ва повторяющихся точек"""
     points = list(zip(rw.x_values, rw.y_values))
-    count_repeat_points = len(points) - len(set(points))
+    points_counts = Counter(points)
+    repeated_points = [pt for pt, count in points_counts.items() if count>1]
+
+    count_repeat_points = len(repeated_points)
     percent_repeat_points = count_repeat_points/len(points)*100
+
+    if show_var:
+        draw_repeat_points(ax, repeated_points)
     return f"{count_repeat_points} ({percent_repeat_points:.2f}%)"
+
+
+def draw_repeat_points(ax, repeated_points):
+    """"""
+    if not repeated_points:
+        return
+
+    xs, ys = zip(*repeated_points)
+    ax.scatter(xs, ys, c='red', s=30, marker='*', label="Repeated points", zorder=5)
 
 def calc_repeat_start_point(ax, rw, show_var):
     """Функция подсчета кол-ва возвратов в начальную точку"""
@@ -654,8 +705,28 @@ def angle_between_start_end_point(ax, rw, show_var):
     dx_total = rw.x_values[-1] - rw.x_values[0]
     dy_total = rw.y_values[-1] - rw.y_values[0]
     angle_rad = math.atan2(dy_total, dx_total)
-    angle_deg = math.degrees(angle_rad)
+    #angle_deg = math.degrees(angle_rad)
+    angle_deg = (math.degrees(angle_rad) + 360) % 360
+
+    if show_var:
+        draw_angle_start_end(ax, rw, dx_total, dy_total, angle_rad, angle_deg)
     return round(angle_deg, 2)
+
+def draw_angle_start_end(ax, rw, dx_total, dy_total, angle_rad, angle_deg):
+    """"""
+    ax.annotate("", xy=(rw.x_values[-1], rw.y_values[-1]), xytext=(rw.x_values[0], rw.y_values[0]),
+                arrowprops=dict(arrowstyle='->', color='purple', lw=2), zorder=3)
+    #ax.text(rw.x_values[0] + 0.5, rw.y_values[0] + 0.5, f'{angle_deg:.1f}°', color='purple', fontsize=10, zorder=4)
+
+    ax.axhline(y=rw.x_values[0], color='purple', linestyle='--', linewidth=1)
+    ax.axvline(x=rw.y_values[0], color='purple', linestyle='--', linewidth=1)
+
+    arc_radius = 20
+    arc = Arc((rw.x_values[0], rw.y_values[0]), width=2*arc_radius, height=2*arc_radius, theta1=0, theta2=angle_deg,
+              color='purple', linestyle='-', lw=1)
+    ax.add_patch(arc)
+
+
 
 
 def calc_average_direction(ax, rw, show_var):
@@ -668,8 +739,29 @@ def calc_average_direction(ax, rw, show_var):
 
     average_angle_rad = math.atan2(sum(math.sin(a) for a in angles) / len(angles),
                                    sum(math.cos(a) for a in angles) / len(angles))
+
+    if show_var:
+        draw_average_direction(ax, average_angle_rad)
     return round(math.degrees(average_angle_rad), 2)
 
+
+def draw_average_direction(ax, avg_angle):
+    """"""
+    arrow_length = 25  # фиксированная длина
+    x_base = ax.get_xlim()[0] + 1
+    y_base = ax.get_ylim()[0] + 1
+    dx = arrow_length * math.cos(avg_angle)
+    dy = arrow_length * math.sin(avg_angle)
+
+    ax.annotate("",
+                xy=(x_base + dx, y_base + dy),
+                xytext=(x_base, y_base),
+                arrowprops=dict(arrowstyle="->", color="darkgreen", lw=3),
+                zorder=3)
+
+    ax.text(x_base, y_base - 0.5,
+            "Среднее\nнаправление",
+            fontsize=8, color="darkgreen", ha="left", va="top")
 
 def calc_convex_radius(ax, rw, show_var):
     """Функция вычисления радиуса охвата от центра масс"""
@@ -680,7 +772,19 @@ def calc_convex_radius(ax, rw, show_var):
     for x, y in zip(rw.x_values, rw.y_values):
         radius = math.hypot(x - x_avg, y - y_avg)
         max_radius = max(max_radius, radius)
+
+    if show_var:
+        draw_convex_radius(ax, rw, x_avg, y_avg, max_radius)
+
     return round(max_radius, 2)
+
+
+def draw_convex_radius(ax, rw, x_avg, y_avg, max_radius):
+    """"""
+    circle = Circle((x_avg, y_avg), max_radius, edgecolor='purple', linestyle='--', linewidth=2, facecolor='none',
+                    label='Convex Radius', zorder=2)
+    ax.add_patch(circle)
+
 
 
 def calc_msd(ax, rw, show_var):
