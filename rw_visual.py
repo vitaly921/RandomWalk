@@ -1,27 +1,14 @@
 from collections import Counter
-
 import matplotlib.pyplot as plt
 import math
 import tkinter as tk
-
 from matplotlib.patches import Circle
-from matplotlib.table import Table
-from tkinter import ttk, SOLID, filedialog
+from tkinter import ttk, SOLID
 import matplotlib.animation as animation
 import matplotlib.colors as mcolors
 import numpy as np
 from matplotlib.patches import Arc
-#from fontTools.ttLib.tables.otConverters import Table
-from matplotlib.widgets import Button
-import threading
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-#from fontTools.unicodedata import block
-
-
 from metrics import MetricCheckBox
-
-import random_walk
 from random_walk import RandomWalk
 
 
@@ -59,21 +46,24 @@ def build_static_graph(metrics_object_list):
 
     # Создание списка длиной количества точек
     point_numbers = list(range(rw.num_points))
-    # Определение расстояния между первой и последней точками
-    distance = math.sqrt((rw.x_values[-1] - rw.x_values[0]) ** 2 + (rw.y_values[-1] - rw.y_values[0]) ** 2)
 
     # Если выбран точечный график
     if points_var.get():
-        # Задание размера окна для точечного графика
+        # Задание размера окна для точечного графика для случая если выбраны метрики
         if metrics_var.get() and any(m.enabled_var.get() for m in metrics_object_list):
             fig, ax = plt.subplots(figsize=(12, 5))
+            # Задание масштабирования
             ax.set_aspect('equal')
             # Задание отступа для графика
             plt.subplots_adjust(right=0.6)
+        # Задание размера окна для точечного графика по-умолчанию
         else:
             fig, ax = plt.subplots(figsize=(8, 6))
+
+        # Вызов функции для создания окна графика
         create_window_for_figure(metrics_var, metrics_object_list, rw, fig, ax)
 
+        # Создание заголовка в окне графика
         plt.title("График случайного блуждания точек")
         # Получение пользовательского значения размера точек
         size_points = int(points_size_var.get())
@@ -96,16 +86,19 @@ def build_static_graph(metrics_object_list):
 
     # Если выбран линейный график
     if line_var.get():
-        # Задание размера окна для точечного графика
+        # Задание размера окна для линейного графика для случая если выбраны метрики
         if metrics_var.get() and any(m.enabled_var.get() for m in metrics_object_list):
             fig, ax = plt.subplots(figsize=(12, 5))
             ax.set_aspect('equal')
             # Задание отступа для графика
             plt.subplots_adjust(right=0.6)
+        # Задание размера окна для линейного графика по-умолчанию
         else:
             fig, ax = plt.subplots(figsize=(8, 6))
 
+        # Вызов функции для создания окна графика
         create_window_for_figure(metrics_var, metrics_object_list, rw, fig, ax)
+        # Создание заголовка в окне графика
         plt.title("График случайного блуждания линии")
         # Получение пользовательского значения ширины линии
         line_color = line_color_var.get()
@@ -121,9 +114,6 @@ def build_static_graph(metrics_object_list):
     # Удаление осей X,Y
     #plt.axes().get_xaxis().set_visible(False)
     #plt.axes().get_yaxis().set_visible(False)
-
-
-
 
 
 def build_animation(metrics_object_list):
@@ -178,7 +168,6 @@ def build_animation(metrics_object_list):
         # Если чек-бокс "Additional metrics" активен и нет повтора, и выбраны какие-либо метрики пользователем с
         # чек-боксом "Показать на графике"
         if is_graphical_metrics_enabled(metrics_object_list):
-            print("qwertttttttttttttttttttty")
             # Задание увеличенного размера окна
             fig_line, ax_line = plt.subplots(figsize=(12, 5))
             # Задание равного масштаба на осях для наглядности графического представления метрик
@@ -188,7 +177,6 @@ def build_animation(metrics_object_list):
         # Иначе если чек-бокс "Additional metrics" активен, и выбраны какие-либо метрики пользователем без
         # выбора чек-бокса "Показать на графике" и независимо от повтора
         elif is_text_metrics_enabled(metrics_object_list):
-            print("qwerty")
             # Задание увеличенного размера окна
             fig_line, ax_line = plt.subplots(figsize=(12, 5))
             # Задание равного масштаба на осях для наглядности графического представления метрик (отключено здесь)
@@ -230,7 +218,7 @@ def build_animation(metrics_object_list):
                 # Если чек-бокс "Additional metrics" активен и нет повтора, и выбраны какие-либо метрики пользователем с
                 # чек-боксом "Показать на графике" и сейчас строится последний кадр
                 if is_graphical_metrics_enabled(metrics_object_list) and frame == len(rw.x_values) - 1:
-                    # Отрисовка метрик с графическим представлением
+                    # Отрисовка метрик с графическим представлением в окне с графиком
                     create_window_for_figure(metrics_var, metrics_object_list, rw, fig_line, ax_line)
                     fig_line.canvas.draw()
                 # Возврат кортежей с объектами линий и точки
@@ -355,17 +343,12 @@ def create_window_for_figure(metrics_var, metrics_object_list, rw, fig=None, ax=
         metrics_text = '\n\n'.join(f'{m.label}' for m in enabled_metrics)
         # Получаем значения выбранных пользователем метрик
         metrics_value = '\n\n'.join(str(m.calc_func(ax, rw, m.show_var.get())) if callable(m.calc_func) else "...None" for m in enabled_metrics)
-        # plt.sca(ax)
+
+        # Отрисовка текста и значений выбранных метрик в окне с графиком
         fig.text(0.75, 0.92, "Расчёт метрик", fontsize=12, va='top', ha='left')
         fig.text(0.62, 0.85, metrics_text, fontsize=9, va='top', ha='left', family='monospace')
         fig.text(0.95, 0.85, metrics_value, fontsize=9, va='top', ha='right', family='monospace')
-        #plt.subplots_adjust(right=0.6)
 
-        ## Отрисовка графических представлений метрик
-        #for metric in enabled_metrics:
-        #    if hasattr(metric, 'show_var') and metric.show_var.get():
-        #        if metric.draw_func and callable(metric.draw_func):
-        #            metric.draw_func(ax, rw)
     return fig, ax
 
 
@@ -575,77 +558,102 @@ def constant_stub(rw):
 def calc_dist(ax, rw, show_var):
     """Функция подсчета расстояния между начальной и конечной точками блуждания"""
     distance = round(math.sqrt((rw.x_values[-1] - rw.x_values[0]) ** 2 + (rw.y_values[-1] - rw.y_values[0]) ** 2), 2)
-
+    # Если отмечен флаг "Показать на графике"
     if show_var:
+        # Вызов функции для отрисовки линии между начальной и конечной точками
         draw_dist(ax, rw)
+    # Возврат значения метрики
     return distance
 
 
 def draw_dist(ax, rw):
     """Рисует линию между начальной и конечной точками"""
-    ax.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=1)
-    ax.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder=1)
+    ax.scatter(0, 0, c='green', edgecolors='none', s=100, zorder=1, label='Start point')
+    ax.scatter(rw.x_values[-1], rw.y_values[-1], c='orange', edgecolors='none', s=100, zorder=1, label="Finish point")
     ax.plot([0, rw.x_values[-1]], [0, rw.y_values[-1]], c='red', linestyle='--', linewidth=3,
-            label='Line between points', zorder=10)
+            label='Line between Start and Finish points', zorder=10)
+    # Отрисовка обозначений
+    ax.legend(loc="upper right", fontsize=7)
 
 
 def calc_max_distance_between_points(ax, rw, show_var):
     """Функция подсчета максимального расстояния между точками"""
+    # Создание переменной для хранения максимального расстояния с начальным значением 0
     max_dist = 0
+    # Создание двух точек в координатах (0, 0)
     p1 = (rw.x_values[0], rw.y_values[0])
     p2 = (rw.x_values[0], rw.y_values[0])
 
+    # Вычисление расстояния между каждой парой точек без повторений
     for i in range(len(rw.x_values)):
         for j in range(i+1, len(rw.x_values)):
             dist = math.hypot(rw.x_values[i]-rw.x_values[j], rw.y_values[i]-rw.y_values[j])
-
+            # Если полученное расстояние больше максимального
             if dist > max_dist:
+                # Обновление переменной с максимальным расстоянием
                 max_dist = dist
+                # Получение координат точек с максимальным расстоянием
                 p1 = (rw.x_values[i], rw.y_values[i])
                 p2 = (rw.x_values[j], rw.y_values[j])
-
+    # Если отмечен флаг "Показать на графике"
     if show_var:
+        # Вызов функции для отрисовки линии между максимально удалёнными точками
         draw_max_dist(ax, rw, p1, p2)
-
+    # Возврат округлённого значения метрики
     return round(max_dist, 2)
 
 
 def draw_max_dist(ax, rw, p1, p2):
     """Рисует линию между максимально удалёнными точками"""
-    ax.scatter(*p1, c='green', edgecolors='none', s=100, zorder=9)
-    ax.scatter(*p2, c='orange', edgecolors='none', s=100, zorder=9)
-    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], c='yellow', linestyle='-', linewidth=3,
-            label='Line between points', zorder=10)
+    ax.scatter(*p1, c='black', edgecolors='none', s=100, zorder=9, label='Fist max distant point')
+    ax.scatter(*p2, c='purple', edgecolors='none', s=100, zorder=9, label='Second max distant point')
+    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], c='orange', linestyle='-', linewidth=3,
+            label='Line between the most distant points', zorder=10)
+    # Отрисовка обозначений
+    ax.legend(loc="upper right", fontsize=7)
 
 
 def calc_max_distance_from_start_point(ax, rw, show_var):
     """Функция подсчета радиуса блуждания"""
+    # Создание переменной для хранения максимального расстояния с начальным значением 0
     max_dist = 0
+    # Задание координат начальной точки (центра окружности)
     x0, y0 =  rw.x_values[0], rw.y_values[0]
+    # Создание переменной для хранения координат самой удаленной точки от начаьной
     farthest_point = (x0, y0)
+    # Перебор точек
     for x, y in zip(rw.x_values, rw.y_values):
+        # Подсчёт расстояния между текущей и начальной точками
         dist = math.hypot(x-x0, y-y0)
+        # Обновление значений максимального расстояния и координаты
         if dist > max_dist:
             max_dist = dist
             farthest_point = (x, y)
-
+    # Если отмечен флаг "Показать на графике"
     if show_var:
+        # Вызов функции для отрисовки окружности с центром в начальной точке с радиусом максимального расстояния
         draw_max_distance_from_start_point(ax, x0, y0, max_dist, farthest_point)
+    # Возврат округлённого значения метрики
     return round(max_dist, 2)
 
 
 def draw_max_distance_from_start_point(ax, x0, y0, radius, farthest_point):
-    """"""
-    circle = plt.Circle((x0, y0), radius, color = 'blue', fill=False, linestyle='--', linewidth=2, zorder=2)
+    """Функция отрисовки окружности с радиусом блуждания"""
+    # Отрисовка круга с центром в начальной точке и радиусом максимального расстояния (блуждания)
+    circle = plt.Circle((x0, y0), radius, color = 'blue', fill=False, linestyle='--', linewidth=2, zorder=2,
+                        label='A circle with a wandering radius')
+    # Добавление круга на график
     ax.add_patch(circle)
+    # Изменение размеров окна для наглядного вида с окружностью
     ax.set_xlim(min(ax.get_xlim()[0], x0 - radius), max(ax.get_xlim()[1], x0 + radius))
     ax.set_ylim(min(ax.get_ylim()[0], y0 - radius), max(ax.get_ylim()[1], y0 + radius))
 
-    #ax.plot([x0, farthest_point[0]], [y0, farthest_point[1]], color='purple', linestyle='--', linewidth=2, zorder=3)
-
+    ax.plot([x0, farthest_point[0]], [y0, farthest_point[1]], color='black', linestyle='--', linewidth=2, zorder=3,
+            label='Line of the radius of the walk')
+    # Отрисовка начальной и максимально удаленной от неё точек
     ax.scatter([x0], [y0], color='green', s=80, zorder=4, label="Start point")
-    ax.scatter([farthest_point[0]], [farthest_point[1]], color='red', s=80, zorder=4, label="Max from start point")
-
+    ax.scatter([farthest_point[0]], [farthest_point[1]], color='red', s=80, zorder=4, label="Most remote point from Start")
+    # Отрисовка обозначений
     ax.legend(loc="upper right", fontsize=8)
 
 
@@ -653,80 +661,126 @@ def center_of_mass(ax, rw, show_var):
     """Функция подсчёта координат центра масс"""
     x_avg = sum(rw.x_values)/len(rw.x_values)
     y_avg = sum(rw.y_values)/len(rw.y_values)
-
+    # Если отмечен флаг "Показать на графике"
     if show_var:
+        # Вызов функции для отрисовки точки с центром масс
         draw_center_of_mass(ax, rw, x_avg, y_avg)
+    # Возврат округленных значений координат центра масс
     return f"({x_avg:.2f},{y_avg:.2f})"
 
 
 def draw_center_of_mass(ax, rw, x_avg, y_avg):
-    """"""
-    ax.scatter(x_avg, y_avg, c='purple', s=200, marker='X', zorder=3, label="Center of mass")
-
-    ax.axhline(y=y_avg, color='purple', linestyle='--', linewidth=1)
-    ax.axvline(x=x_avg, color='purple', linestyle='--', linewidth=1)
+    """Функция отрисовки на графике центра масс"""
+    ax.scatter(x_avg, y_avg, c='brown', s=200, marker='X', zorder=3, label="Center of mass")
+    # Отрисовка пунктирных линий на оси координат
+    ax.axhline(y=y_avg, color='brown', linestyle='--', linewidth=1)
+    ax.axvline(x=x_avg, color='brown', linestyle='--', linewidth=1)
+    # Отрисовка обозначений
+    ax.legend(loc="upper right", fontsize=8)
 
 
 def calc_repeat_points(ax, rw, show_var):
     """Функция подсчёта кол-ва повторяющихся точек"""
+    # Получение списка точек
     points = list(zip(rw.x_values, rw.y_values))
+    # Подсчёт кол-ва точек
     points_counts = Counter(points)
+    # Создание списка с повторяющимися точками
     repeated_points = [pt for pt, count in points_counts.items() if count>1]
-
+    # Подсчёт повторяющихся точек
     count_repeat_points = len(repeated_points)
+    # Подсчёт процента повторяющихся точек от общего кол-ва
     percent_repeat_points = count_repeat_points/len(points)*100
-
+    # Если отмечен флаг "Показать на графике"
     if show_var:
+        # Вызов функции для отрисовки повторяющихся точек
         draw_repeat_points(ax, repeated_points)
+    # Возврат кол-ва повторяющихся точек (в т.ч. в %)
     return f"{count_repeat_points} ({percent_repeat_points:.2f}%)"
 
 
 def draw_repeat_points(ax, repeated_points):
-    """"""
+    """Функция отрисовки повторяющихся точек"""
+    # Обработка случая если повторяющихся точек нет, но флаг "Показать на графике" отмечен
     if not repeated_points:
         return
-
+    # Сохранение координат повторяющихся точек
     xs, ys = zip(*repeated_points)
+    # Отрисовка метки у повторяющихся точек
     ax.scatter(xs, ys, c='red', s=30, marker='*', label="Repeated points", zorder=5)
+    # Отрисовка обозначений
+    ax.legend(loc="upper right", fontsize=8)
+
 
 def calc_repeat_start_point(ax, rw, show_var):
     """Функция подсчета кол-ва возвратов в начальную точку"""
+    # Задание начальных точек
     x0, y0 = rw.x_values[0], rw.y_values[0]
+    # Задание начального кол-ва повторов
     repeats = 0
-
+    # Перебор координат точек от второй до последней
     for x,y in zip(rw.x_values[1:], rw.y_values[1:]):
+        # Проверка на наличие совпадений
         if x==x0 and y==y0:
+            # Увеличение кол-ва совпадений
             repeats += 1
+    # Возврат кол-ва совпадений
     return repeats
 
 
 def angle_between_start_end_point(ax, rw, show_var):
     """Функция вычисления угла между начальной и конечной точками"""
+    # Расстояние между координатой Х и У первой и последней точки
     dx_total = rw.x_values[-1] - rw.x_values[0]
     dy_total = rw.y_values[-1] - rw.y_values[0]
-    angle_rad = math.atan2(dy_total, dx_total)
-    #angle_deg = math.degrees(angle_rad)
-    angle_deg = (math.degrees(angle_rad) + 360) % 360
 
+    # Вычисление угла в радианах
+    angle_rad = math.atan2(dy_total, dx_total)
+    # Вычисление угла в градусах
+    angle_deg = math.degrees(angle_rad)
+    # Переводим угол в диапазон [-180, 180)
+    if angle_deg >= 180:
+        angle_deg -= 360
+
+    #angle_deg = (math.degrees(angle_rad) + 360) % 360
+
+    # Если отмечен флаг "Показать на графике"
     if show_var:
+        # Вызов функции отрисовки вектора и угла между ним и осью Х
         draw_angle_start_end(ax, rw, dx_total, dy_total, angle_rad, angle_deg)
+    # Возврат значения угла в округленном виде
     return round(angle_deg, 2)
 
+
 def draw_angle_start_end(ax, rw, dx_total, dy_total, angle_rad, angle_deg):
-    """"""
+    """Функция отрисовки вектора от начальной до конечной точки и угла между ним и осью Х"""
     ax.annotate("", xy=(rw.x_values[-1], rw.y_values[-1]), xytext=(rw.x_values[0], rw.y_values[0]),
-                arrowprops=dict(arrowstyle='->', color='purple', lw=2), zorder=3)
+                arrowprops=dict(arrowstyle='->', color='black', lw=2), zorder=3, label='Vector from Start to End')
+    # Создание надписи со значением угла
     #ax.text(rw.x_values[0] + 0.5, rw.y_values[0] + 0.5, f'{angle_deg:.1f}°', color='purple', fontsize=10, zorder=4)
 
-    ax.axhline(y=rw.x_values[0], color='purple', linestyle='--', linewidth=1)
-    ax.axvline(x=rw.y_values[0], color='purple', linestyle='--', linewidth=1)
+    # Создание линий пересечения в начальной точке
+    ax.axhline(y=rw.x_values[0], color='green', linestyle='-', linewidth=1)
+    ax.axvline(x=rw.y_values[0], color='green', linestyle='--', linewidth=1)
 
+    # Задание радиуса дуги угла
     arc_radius = 20
-    arc = Arc((rw.x_values[0], rw.y_values[0]), width=2*arc_radius, height=2*arc_radius, theta1=0, theta2=angle_deg,
-              color='purple', linestyle='-', lw=1)
+
+    # Проверка значения угла в радиусах для правильной отрисовки дуги
+    if angle_deg >= 0:
+        # Угол положительный: рисуем от 0 до angle_deg
+        theta1, theta2 = 0, angle_deg
+    else:
+        # Угол отрицательный: рисуем от angle_deg до 0
+        theta1, theta2 = angle_deg, 0
+
+    # Создание угла как дуги
+    arc = Arc((rw.x_values[0], rw.y_values[0]), width=2*arc_radius, height=2*arc_radius, theta1=theta1, theta2=theta2,
+              color='red', linestyle='-', lw=2, label='Angle from X-axis to Vector')
+    # Добавление угла на график
     ax.add_patch(arc)
-
-
+    # Отрисовка обозначений
+    ax.legend(loc="upper right", fontsize=8)
 
 
 def calc_average_direction(ax, rw, show_var):
@@ -739,8 +793,9 @@ def calc_average_direction(ax, rw, show_var):
 
     average_angle_rad = math.atan2(sum(math.sin(a) for a in angles) / len(angles),
                                    sum(math.cos(a) for a in angles) / len(angles))
-
+    # Если отмечен флаг "Показать на графике"
     if show_var:
+        # Вызов функции для отрисовки
         draw_average_direction(ax, average_angle_rad)
     return round(math.degrees(average_angle_rad), 2)
 
@@ -763,7 +818,49 @@ def draw_average_direction(ax, avg_angle):
             "Среднее\nнаправление",
             fontsize=8, color="darkgreen", ha="left", va="top")
 
+
 def calc_convex_radius(ax, rw, show_var):
+    """Функция вычисления радиуса размаха блуждания между самыми удаленными точками"""
+    # Создание переменной для хранения максимального расстояния с начальным значением 0
+    max_dist = 0
+    # Создание двух точек в координатах (0, 0)
+    p1 = (rw.x_values[0], rw.y_values[0])
+    p2 = (rw.x_values[0], rw.y_values[0])
+
+    # Вычисление расстояния между каждой парой точек без повторений
+    for i in range(len(rw.x_values)):
+        for j in range(i + 1, len(rw.x_values)):
+            dist = math.hypot(rw.x_values[i] - rw.x_values[j], rw.y_values[i] - rw.y_values[j])
+            # Если полученное расстояние больше максимального
+            if dist > max_dist:
+                # Обновление переменной с максимальным расстоянием
+                max_dist = dist
+                # Получение координат точек с максимальным расстоянием
+                p1 = (rw.x_values[i], rw.y_values[i])
+                p2 = (rw.x_values[j], rw.y_values[j])
+    # Получение координат центральной точки на линии между двумя максимально удаленными точками
+    center_x = (p1[0] + p2[0]) / 2
+    center_y = (p1[1] + p2[1]) / 2
+    # Получение радиуса размаха (половины длины линии между максимально удаленными точками)
+    radius = max_dist / 2
+
+    # Если отмечен флаг "Показать на графике"
+    if show_var:
+        # Вызов функции для отрисовки размаха блуждания в виде окружности
+        draw_convex_radius(ax, rw, center_x, center_y, radius)
+
+    return round(radius, 2)
+
+def draw_convex_radius(ax, rw, x, y, radius):
+    """Функция отрисовки размаха блуждания с диаметром равным максимальному расстоянию между точками"""
+    circle = Circle((x, y), radius, edgecolor='orange', linestyle='--', linewidth=2, facecolor='none',
+                    label='Convex Radius', zorder=2)
+    ax.add_patch(circle)
+    # Отрисовка обозначений
+    ax.legend(loc="upper right", fontsize=8)
+
+
+def calc_coverage_radius(ax, rw, show_var):
     """Функция вычисления радиуса охвата от центра масс"""
     max_radius = 0.0
     x_avg = sum(rw.x_values)/len(rw.x_values)
@@ -772,19 +869,21 @@ def calc_convex_radius(ax, rw, show_var):
     for x, y in zip(rw.x_values, rw.y_values):
         radius = math.hypot(x - x_avg, y - y_avg)
         max_radius = max(max_radius, radius)
-
+    # Если отмечен флаг "Показать на графике"
     if show_var:
-        draw_convex_radius(ax, rw, x_avg, y_avg, max_radius)
+        # Вызов функции для отрисовки охвата блуждания в виде окружности
+        draw_coverage_radius(ax, rw, x_avg, y_avg, max_radius)
 
     return round(max_radius, 2)
 
 
-def draw_convex_radius(ax, rw, x_avg, y_avg, max_radius):
-    """"""
-    circle = Circle((x_avg, y_avg), max_radius, edgecolor='purple', linestyle='--', linewidth=2, facecolor='none',
-                    label='Convex Radius', zorder=2)
+def draw_coverage_radius(ax, rw, x_avg, y_avg, max_radius):
+    """Функция отрисовки охвата блуждания с радиусом максимального расстояния от центра масс"""
+    circle = Circle((x_avg, y_avg), max_radius, edgecolor='brown', linestyle='--', linewidth=2, facecolor='none',
+                    label='Coverage Radius', zorder=2)
     ax.add_patch(circle)
-
+    # Отрисовка обозначений
+    ax.legend(loc="upper right", fontsize=8)
 
 
 def calc_msd(ax, rw, show_var):
@@ -939,6 +1038,7 @@ def create_metrics_frame(parent):
         ("Количество повторяющихся точек","repeat_points", True, calc_repeat_points),
         ("Угол между началом и концом блуждания","average_direction", True, angle_between_start_end_point),
         ("Радиус размаха траектории","convex_radius", True, calc_convex_radius),
+        ("Радиус охвата блуждания от центра масс", "coverage_radius", True, calc_coverage_radius),
         ("Средний квадрат перемещения","mean_squared_displacement", False, calc_msd),
         ("Среднее направление движения","average_direction", True, calc_average_direction),
         ("Средняя длина шага между точками","total_time", False, calc_average_step),
@@ -951,7 +1051,7 @@ def create_metrics_frame(parent):
     metrics_object_list = []
 
     def on_any_metrics_toggle():
-        """Функция проверки списка метрик"""
+        """Функция проверки выбранных метрик пользователем"""
         # Проверка всех чек-боксов метрик
         all_enabled = all(metric.enabled_var.get() for metric in metrics_object_list)
         # Если все метрики выбраны, но чек-бокс "Выбрать все" не отмечен
@@ -973,7 +1073,7 @@ def create_metrics_frame(parent):
 
     def toggle_all_metrics():
         """Обработчик включения чек-бокса "Выбрать всё" """
-        # Получение булевого значения переменной-состояния чек-бокса "Выбрать всё"
+        # Получение значения переменной-состояния чек-бокса "Выбрать всё"
         all_selected = bool(all_check_metrics_var.get())
         #print("Toggle:", all_selected)
         # Для каждого объекта метрики из списка обновить состояние для чек-боксов
@@ -986,7 +1086,6 @@ def create_metrics_frame(parent):
     # Создание чек-бокса "Выбрать всё" и задание его расположения
     all_check_metrics = ttk.Checkbutton(frame, text="Check all metrics", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
     all_check_metrics.grid(row=len(metrics_info), column=0, sticky="w", columnspan=5)
-
 
     return label, frame, list(metrics_object_list)
 
