@@ -51,7 +51,7 @@ def build_static_graph(metrics_object_list):
     if points_var.get():
         # Задание размера окна для точечного графика для случая если выбраны метрики
         if metrics_var.get() and any(m.enabled_var.get() for m in metrics_object_list):
-            fig, ax = plt.subplots(figsize=(12, 5))
+            fig, ax = plt.subplots(figsize=(12, 6))
             # Задание масштабирования
             ax.set_aspect('equal')
             # Задание отступа для графика
@@ -88,7 +88,7 @@ def build_static_graph(metrics_object_list):
     if line_var.get():
         # Задание размера окна для линейного графика для случая если выбраны метрики
         if metrics_var.get() and any(m.enabled_var.get() for m in metrics_object_list):
-            fig, ax = plt.subplots(figsize=(12, 5))
+            fig, ax = plt.subplots(figsize=(12, 6))
             ax.set_aspect('equal')
             # Задание отступа для графика
             plt.subplots_adjust(right=0.6)
@@ -169,7 +169,7 @@ def build_animation(metrics_object_list):
         # чек-боксом "Показать на графике"
         if is_graphical_metrics_enabled(metrics_object_list):
             # Задание увеличенного размера окна
-            fig_line, ax_line = plt.subplots(figsize=(12, 5))
+            fig_line, ax_line = plt.subplots(figsize=(12, 6))
             # Задание равного масштаба на осях для наглядности графического представления метрик
             ax_line.set_aspect('equal')
             # Задание отступа для графика
@@ -249,7 +249,7 @@ def build_animation(metrics_object_list):
         # чек-боксом "Показать на графике"
         if is_graphical_metrics_enabled(metrics_object_list):
             # Задание увеличенного размера окна
-            fig_point, ax_point = plt.subplots(figsize=(12, 5))
+            fig_point, ax_point = plt.subplots(figsize=(12, 6))
             # Задание равного масштаба на осях для наглядности графического представления метрик
             ax_point.set_aspect('equal')
             # Задание отступа для графика
@@ -555,6 +555,7 @@ def constant_stub(rw):
     """Функция-заглушка для результатов метрик"""
     return "...None"
 
+
 def calc_dist(ax, rw, show_var):
     """Функция подсчета расстояния между начальной и конечной точками блуждания"""
     distance = round(math.sqrt((rw.x_values[-1] - rw.x_values[0]) ** 2 + (rw.y_values[-1] - rw.y_values[0]) ** 2), 2)
@@ -785,38 +786,41 @@ def draw_angle_start_end(ax, rw, dx_total, dy_total, angle_rad, angle_deg):
 
 def calc_average_direction(ax, rw, show_var):
     """Функция вычисления среднего направления движения"""
+    # Задание пустого массива углов
     angles = []
+    # Вычисление угла между каждыми точками
     for i in range(1, len(rw.x_values)):
         dx = rw.x_values[i] - rw.x_values[i-1]
         dy = rw.y_values[i] - rw.y_values[i-1]
+        # Заполнение массива углами
         angles.append(math.atan2(dy, dx))
-
+    # Вычисление среднего угла
     average_angle_rad = math.atan2(sum(math.sin(a) for a in angles) / len(angles),
                                    sum(math.cos(a) for a in angles) / len(angles))
     # Если отмечен флаг "Показать на графике"
     if show_var:
         # Вызов функции для отрисовки
         draw_average_direction(ax, average_angle_rad)
+    # Возврат значения среднего угла в округлённом виде
     return round(math.degrees(average_angle_rad), 2)
 
 
 def draw_average_direction(ax, avg_angle):
-    """"""
-    arrow_length = 25  # фиксированная длина
-    x_base = ax.get_xlim()[0] + 1
-    y_base = ax.get_ylim()[0] + 1
+    """Функция отрисовки среднего направления движения"""
+    arrow_length = 35  # фиксированная длина
+    # Задание начальной точки отрисовки стрелки
+    x_base = ax.get_xlim()[0]
+    y_base = ax.get_ylim()[0]
+    # Вычисление точки конца стрелки
     dx = arrow_length * math.cos(avg_angle)
     dy = arrow_length * math.sin(avg_angle)
 
-    ax.annotate("",
+    # Отрисовка стрелки
+    ax.annotate("Average\ndirection",
                 xy=(x_base + dx, y_base + dy),
                 xytext=(x_base, y_base),
                 arrowprops=dict(arrowstyle="->", color="darkgreen", lw=3),
-                zorder=3)
-
-    ax.text(x_base, y_base - 0.5,
-            "Среднее\nнаправление",
-            fontsize=8, color="darkgreen", ha="left", va="top")
+                zorder=3, label="Average direction")
 
 
 def calc_convex_radius(ax, rw, show_var):
@@ -848,8 +852,8 @@ def calc_convex_radius(ax, rw, show_var):
     if show_var:
         # Вызов функции для отрисовки размаха блуждания в виде окружности
         draw_convex_radius(ax, rw, center_x, center_y, radius)
-
     return round(radius, 2)
+
 
 def draw_convex_radius(ax, rw, x, y, radius):
     """Функция отрисовки размаха блуждания с диаметром равным максимальному расстоянию между точками"""
@@ -862,10 +866,13 @@ def draw_convex_radius(ax, rw, x, y, radius):
 
 def calc_coverage_radius(ax, rw, show_var):
     """Функция вычисления радиуса охвата от центра масс"""
+    # Задание начального радиуса
     max_radius = 0.0
+    # Вычисление точки центра масс
     x_avg = sum(rw.x_values)/len(rw.x_values)
     y_avg = sum(rw.y_values)/len(rw.y_values)
 
+    # Перебор всех точек и вычисление максимально удаленной от центра масс
     for x, y in zip(rw.x_values, rw.y_values):
         radius = math.hypot(x - x_avg, y - y_avg)
         max_radius = max(max_radius, radius)
@@ -873,7 +880,7 @@ def calc_coverage_radius(ax, rw, show_var):
     if show_var:
         # Вызов функции для отрисовки охвата блуждания в виде окружности
         draw_coverage_radius(ax, rw, x_avg, y_avg, max_radius)
-
+    # Возврат округленного значения максимального расстояния (радиуса от центра масс)
     return round(max_radius, 2)
 
 
@@ -888,61 +895,79 @@ def draw_coverage_radius(ax, rw, x_avg, y_avg, max_radius):
 
 def calc_msd(ax, rw, show_var):
     """Функция подсчёта среднего квадрата перемещения"""
+    # Задание начальной точки
     x0, y0 = rw.x_values[0], rw.y_values[0]
-
+    # Задание начальной суммы квадратов расстояний
     sum_squared_dist = 0.0
-
+    # Перебор всех точек и вычисление суммы квадратов расстояний относительно начальной
     for x, y in zip(rw.x_values, rw.y_values):
+        # Вычисление расстояния между текущей точкой и начальной
         dx = x - x0
         dy = y - y0
+        # Подсчёт суммы квадратов расстояний
         sum_squared_dist += math.hypot(dx, dy)**2
-
+    # Деление суммы квадратов расстояний на количество точек
     msd = sum_squared_dist/len(rw.x_values)
+    # Возврат округлённого значения среднего квадрата перемещения
     return round(msd, 2)
 
 
 def calc_path_length(ax, rw, show_var):
     """Функция вычисления длины пути блуждания"""
+    # Длина не будет подсчитана при количестве точек меньше двух
     if len(rw.x_values) < 2:
         return 0.0
-
+    # Задание начальной длины
     total_length = 0.0
+    # Перебор точек и суммирование длины между соседними
     for i in range(len(rw.x_values)-1):
+        # Расстояние между соседними точками по координатам Х и У
         dx = rw.x_values[i+1] - rw.x_values[i]
         dy = rw.y_values[i+1] - rw.y_values[i]
+        # Вычисление расстояния между соседними точками
         length = math.hypot(dx, dy)
+        # Суммирование к общей длине
         total_length +=length
-
+    # Возврат округлённого значения длины пути
     return round(total_length, 2)
 
 
 def calc_efficiency_ratio(ax, rw, show_var):
     """Вычисляет отношение перемещения к длине пути (эффективность движения)"""
+    # Метрика не будет считаться при кол-ве точек меньше двух
     if len(rw.x_values) < 2:
         return None
-    total_length = calc_path_length(ax, rw, show_var)
-    displacement = calc_dist(ax, rw, show_var)
-
+    # Подсчет пути и перемещения
+    total_length = calc_path_length(ax, rw, False)
+    displacement = calc_dist(ax, rw, False)
+    # Если длина пути больше нуля
     if total_length > 0:
+        # Подсчёт эффективности движения как отношения перемещения к длине пути
         efficiency = displacement/total_length
+        # Перевод результата в проценты
         eff_percent = efficiency*100
+    # Иначе эффективность нулевая
     else:
         efficiency = 0.0
         eff_percent = 0.0
-
+    # Возврат вычисленной эффективности движения
     return f"{efficiency:.2f} ({eff_percent:.2f}%)"
 
 
 def count_turns(ax, rw, show_var):
     """Функция подсчёта значимых поворотов (более 45 град.)в траектории блуждания"""
-    angle_threshold = 90
-
+    # Задание значения угла, при котором поворот является значительным
+    angle_threshold = 45
+    # При кол-ве точек меньше трех кол-во поворотов равно нулю
     if len(rw.x_values) < 3:
         return 0
 
+    # Задание начального значения кол-ва поворотов
     turn_count = 0
+    # Подсчет всех возможных углов
     all_angles_count = len(rw.x_values) - 2
 
+    # Перебор векторов всех точек
     for i in range(1, len(rw.x_values)-1):
         # Вектор предыдущего отрезка
         dx1 = rw.x_values[i] - rw.x_values[i-1]
@@ -956,19 +981,24 @@ def count_turns(ax, rw, show_var):
         angle = math.degrees(math.atan2(dy2, dx2) - math.atan2(dy1, dx1))
         angle = (angle + 180) % 360 -180    # Нормализация в диапазоне [-180, 180]
 
+        # Если угол любого знака больше или равен значительному углу
         if abs(angle) >= angle_threshold:
+            # Засчитываем поворот как значительный
             turn_count += 1
+    # Вычисление процентного соотношения значимых поворотов от общего их числа
     percent_turn_count = turn_count / all_angles_count * 100
+    # Возврат кол-ва значимых поворотов и их процентного соотношения
     return f"{turn_count} ({percent_turn_count:.2f}%)"
 
 
 def mean_angles(ax, rw, show_var):
     """Расчет среднего угла поворота на траектории"""
+    # Если кол-во точек меньше трех, то вычисление метрики не производится
     if len(rw.x_values) < 3:
         return 0
-
+    # Создание списка с углами поворота
     angles = []
-
+    # Перебор векторов пути
     for i in range(1, len(rw.x_values)-1):
         # Вектор предыдущего отрезка
         dx1 = rw.x_values[i] - rw.x_values[i-1]
@@ -981,42 +1011,52 @@ def mean_angles(ax, rw, show_var):
         # Вычисляем угол между векторами
         angle = math.degrees(math.atan2(dy2, dx2) - math.atan2(dy1, dx1))
         angle = (angle + 180) % 360 -180    # Нормализация в диапазоне [-180, 180]
-
+        # Добавление вычисленного угла в список
         angles.append(abs(angle))
-
+    # Вычисление среднего угла поворота как отношение суммы всех углов к их кол-ву
     mean_angle = sum(angles)/len(angles) if angles else 0
+    # Возврат округленного значения среднего угла поворота
     return round(mean_angle, 2)
+
 
 def calc_average_step(ax, rw, show_var):
     """Функция подсчета средней длины шага"""
-
+    # Если кол-во точек меньше двух - то подсчёт метрики не производится
     if len(rw.x_values) < 2:
         return None
-
+    # Задание начальной длины шага
     length_steps = 0.0
+    # Задание кол-ва шагов = кол-ву точек -1
     step_count = len(rw.x_values)-1
-
+    # Для каждой точки
     for i in range(step_count):
+        # Подсчет расстояния от следующей до текущей
         dx = rw.x_values[i+1] - rw.x_values[i]
         dy = rw.y_values[i+1] - rw.y_values[i]
+        # Суммирования расстояния
         length_steps += math.hypot(dx, dy)
-
+    # Вычисление средней длины шага как отношение суммы расстояний к кол-ву шагов
     average_length = length_steps / step_count
     return round(average_length, 2)
 
 
 def on_repeat_toggle():
-    """"""
+    """Функция обработчик нажатия кнопки чек-бокса повтора анимации"""
+    # Получение текущего значения чек-бокса
     repeat_value = repeat_var.get()
-    #print("Hello")
+    # Перебираем каждую метрику
     for metric in metrics_object_list:
-        if metric.checkbox_show:  # Проверяем, есть ли у метрики этот чекбокс
+        # Проверяем, есть ли у метрики этот чекбокс
+        if metric.checkbox_show:
+            # Для случая, если чек-бокс повтора True
             if repeat_value:
+                # Делаем чек-бокс "Показать на графике" не активным и переводим в положение False
                 metric.checkbox_show.config(state='disabled')
                 metric.show_var.set(False)
+            # Иначе если чек-бокс повтора не выделен, а метрика выбрана пользователем
             elif not repeat_value and metric.enabled_var.get():
+                # Делаем чек-бокс "Показать на графике" активным
                 metric.checkbox_show.config(state='normal')
-
 
 
 def create_metrics_frame(parent):
@@ -1093,7 +1133,7 @@ def create_metrics_frame(parent):
 # Создание главного окна
 root = tk.Tk()
 root.title("Случайное блуждание")
-root.geometry("500x800+100+100")
+root.geometry("500x820+100+100")
 root.resizable(False, False)
 
 # Создание пустых словарей фреймов с дополнительными настройками и заголовков для них
@@ -1218,6 +1258,7 @@ animation_radio.grid(row=0, column=1, sticky='w', padx=5, pady=2)
 repeat_check = ttk.Checkbutton(frame, text="Repeating", variable=repeat_var)
 repeat_check.grid(row=0, column=2, sticky='w', padx=5, pady=2)
 
+# Если отмечен чек-бок "Повторить анимацию", то вызов лямбда-функции
 repeat_var.trace_add('write', lambda *args: on_repeat_toggle())
 
 # Создание кнопки для начала построения графиков
