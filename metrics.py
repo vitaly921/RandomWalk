@@ -37,7 +37,7 @@ class MetricCheckBox:
         # Если передан флаг для отображения дополнительного чек-бокса метрики
         if show_flag:
             # Создание для текущей метрики чек-бокса "Показать на графике с состоянием из self.show_var"
-            self.checkbox_show = ttk.Checkbutton(parent, text="Показать на графике", variable=self.show_var)
+            self.checkbox_show = ttk.Checkbutton(parent, text="Show on graph", variable=self.show_var)
             # Чек-бокс отображения метрики по-умолчанию неактивен для пользователя
             self.checkbox_show.config(state="disabled")
             # Задание расположение чек-бокса "Показать на графике"

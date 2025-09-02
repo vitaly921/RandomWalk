@@ -1,6 +1,7 @@
 from collections import Counter
 import matplotlib.pyplot as plt
 import math
+import ctypes
 import tkinter as tk
 from matplotlib.patches import Circle
 from tkinter import ttk, SOLID
@@ -155,7 +156,7 @@ def build_animation(metrics_object_list):
         не учитывается отрисовка выбранных пользователем метрик"""
         return(
             (metrics_var.get() and repeat_animation and any(m.enabled_var.get() for m in metrics_object_list)) or
-            (metrics_var.get() and not repeat_animation and all(not m.show_var.get() for m in metrics_object_list))
+            (metrics_var.get() and not repeat_animation and any(m.enabled_var.get() for m in metrics_object_list))
         )
 
     # Если выбрана анимация линий
@@ -178,7 +179,7 @@ def build_animation(metrics_object_list):
         # выбора чек-бокса "Показать на графике" и независимо от повтора
         elif is_text_metrics_enabled(metrics_object_list):
             # Задание увеличенного размера окна
-            fig_line, ax_line = plt.subplots(figsize=(12, 5))
+            fig_line, ax_line = plt.subplots(figsize=(12, 6))
             # Задание равного масштаба на осях для наглядности графического представления метрик (отключено здесь)
             # ax.set_aspect('equal')
             # Задание отступа для графика
@@ -258,7 +259,7 @@ def build_animation(metrics_object_list):
         # выбора чек-бокса "Показать на графике" и независимо от повтора
         elif is_text_metrics_enabled(metrics_object_list):
             # Задание увеличенного размера окна
-            fig_point, ax_point = plt.subplots(figsize=(12, 5))
+            fig_point, ax_point = plt.subplots(figsize=(12, 6))
             # Задание равного масштаба на осях для наглядности графического представления метрик (отключено здесь)
             #ax.set_aspect('equal')
             # Задание отступа для графика
@@ -507,20 +508,20 @@ def create_settings_frames(title, metrics_label, metrics_frame, is_animation=Fal
         colormap_check = ttk.Checkbutton(frame, text="Colormap", variable=colormap_var, command=toggle_colormap)
         colormap_check.grid(row=1, column=0, sticky="w", padx=5, pady=2)
         # Создание надписи для выбора цветовой карты
-        ttk.Label(frame, text="Выбор карты: ").grid(row=1, column=2, sticky="w", padx=5, pady=2)
+        ttk.Label(frame, text="Choice: ").grid(row=1, column=2, sticky="w", padx=5, pady=2)
         # Создание выпадающего списка с вариантами цветовых карт с привязкой к переменной points_colormap_var
         colormap_combobox = ttk.Combobox(frame, values=colormaps, state='disabled',
                                          width=7, textvariable=points_colormap_var)
         colormap_combobox.grid(row=1, column=3, sticky="w")
 
         # Создание надписи для выбора цвета точек
-        ttk.Label(frame, text="Цвет точек: ").grid(row=2, column=2, sticky="w", padx=5, pady=2)
+        ttk.Label(frame, text="Point color: ").grid(row=2, column=2, sticky="w", padx=5, pady=2)
         # Создание выпадающего списка с вариантами цвета точек
         color_combobox = ttk.Combobox(frame, values=colors, state="readonly", width=7, textvariable=points_color_var)
         color_combobox.grid(row=2, column=3, sticky="w")
 
         # Создание надписи для задания размера точек
-        ttk.Label(frame, text="Размер точек: ").grid(row=2, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(frame, text="Point size: ").grid(row=2, column=0, sticky="w", padx=5, pady=2)
         # Создание переключателя значений размера точек
         points_size = tk.Spinbox(frame, from_=1, to=100, width=5, state="readonly", textvariable=points_size_var)
         points_size.grid(row=2, column=1, sticky="w")
@@ -530,11 +531,11 @@ def create_settings_frames(title, metrics_label, metrics_frame, is_animation=Fal
     # Динамический фрейм для создания настроек линейного графика
     if has_lines:
         # Создание надписи для цвета линии
-        ttk.Label(frame, text="Цвет линий: ").grid(row=3, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(frame, text="Color line: ").grid(row=3, column=0, sticky="w", padx=5, pady=2)
         ttk.Combobox(frame, values=colors, width=7, state="readonly", textvariable=line_color_var).grid(row=3, column=1, sticky="w")
 
         # Создание надписи для ширины линии
-        ttk.Label(frame, text="Ширина линий: ").grid(row=3, column=2, sticky="w", padx=5, pady=2)
+        ttk.Label(frame, text="Width line: ").grid(row=3, column=2, sticky="w", padx=5, pady=2)
         tk.Spinbox(frame, from_=1, to=20 ,width=5, state="readonly", textvariable=line_size_var).grid(row=3, column=3, sticky="w")
 
     # Создание чек-бокса с возможностью подсчёта метрик и со своим стилем
@@ -1062,7 +1063,7 @@ def on_repeat_toggle():
 def create_metrics_frame(parent):
     """Функция создания динамического окна с метриками"""
     # Создание надписи для окна с метриками
-    label = ttk.Label(parent, text="Выбор дополнительных метрик", font=("Arial", 8))
+    label = ttk.Label(parent, text="Selecting additional metrics", font=("Arial", 8))
     # Создание динамического фрейма для метрик
     frame = ttk.Frame(root, borderwidth=1, relief=SOLID, padding=[8, 10])
     # Создание переменной состояния для чек-бокса "Выбрать всё" для метрик
@@ -1070,21 +1071,21 @@ def create_metrics_frame(parent):
 
     # Создание списка с информацией о метриках:
     metrics_info = [
-        ("Расстояние между точками (перемещение)", "distance", True, calc_dist),
-        ("Длина пути блуждания", "displacement_to_path_ratio", False, calc_path_length),
-        ("Максимальное расстояние между точками", "max_distance", True, calc_max_distance_between_points),
-        ("Радиус блуждания от начала","max_distance_from_start_radius", True, calc_max_distance_from_start_point),
-        ("Центр масс","center_of_mass", True, center_of_mass),
-        ("Количество повторяющихся точек","repeat_points", True, calc_repeat_points),
-        ("Угол между началом и концом блуждания","average_direction", True, angle_between_start_end_point),
-        ("Радиус размаха траектории","convex_radius", True, calc_convex_radius),
-        ("Радиус охвата блуждания от центра масс", "coverage_radius", True, calc_coverage_radius),
-        ("Средний квадрат перемещения","mean_squared_displacement", False, calc_msd),
-        ("Среднее направление движения","average_direction", True, calc_average_direction),
-        ("Средняя длина шага между точками","total_time", False, calc_average_step),
-        ("Эффективность движения","displacement_to_path_ratio", False, calc_efficiency_ratio),
-        ("Количество значимых поворотов", "total_time", False, count_turns),
-        ("Средний угол поворота", "total_time", False, mean_angles),
+        ("The distance between the start and end points", "distance", True, calc_dist),
+        ("The length of the random walk path", "displacement_to_path_ratio", False, calc_path_length),
+        ("Maximum distance between points", "max_distance", True, calc_max_distance_between_points),
+        ("The radius of wandering from the starting point","max_distance_from_start_radius", True, calc_max_distance_from_start_point),
+        ("Center of mass","center_of_mass", True, center_of_mass),
+        ("Number of repeat points","repeat_points", True, calc_repeat_points),
+        ("The angle between the start and end points","average_direction", True, angle_between_start_end_point),
+        ("Trajectory span radius","convex_radius", True, calc_convex_radius),
+        ("Radius of wandering from the center of mass", "coverage_radius", True, calc_coverage_radius),
+        ("The average square of movement","mean_squared_displacement", False, calc_msd),
+        ("The average direction of wandering","average_direction", True, calc_average_direction),
+        ("Average step length between points","total_time", False, calc_average_step),
+        ("The effectiveness of wandering","displacement_to_path_ratio", False, calc_efficiency_ratio),
+        ("Number of significant turns", "total_time", False, count_turns),
+        ("Average angle of rotation", "total_time", False, mean_angles),
     ]
 
     # Создание пустого списка для объектов метрик
@@ -1132,9 +1133,14 @@ def create_metrics_frame(parent):
 
 # Создание главного окна
 root = tk.Tk()
-root.title("Случайное блуждание")
+root.title("Random walk")
 root.geometry("500x820+100+100")
 root.resizable(False, False)
+#icon = tk.PhotoImage(file='random_walk_icon.png')
+root.iconbitmap('random_walk.ico')
+# Иконка для панели задач (WinAPI)
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
+root.iconbitmap("random_walk.ico")
 
 # Создание пустых словарей фреймов с дополнительными настройками и заголовков для них
 frames = {}
@@ -1142,12 +1148,12 @@ labels = {}
 
 # Создание списка с возможными комбинациями фреймов и заголовков в зависимости от состояния заданного пользователем
 options = [
-    ("static_points", "Настройки статических точек", False, True, False),
-    ("static_lines", "Настройки статических линий", False, False, True),
-    ("static_points_lines", "Настройки статических точек и линий", False, True, True),
-    ("animation_points", "Настройки анимационных точек", True, True, False),
-    ("animation_lines", "Настройки анимационных линий", True, False, True),
-    ("animation_points_lines", "Настройки анимационных точек и линий", True, True, True),
+    ("static_points", "Point Static Settings", False, True, False),
+    ("static_lines", "Line Static Settings", False, False, True),
+    ("static_points_lines", "Settings for static points and lines", False, True, True),
+    ("animation_points", "Point Animation Settings", True, True, False),
+    ("animation_lines", "Line Animation Settings", True, False, True),
+    ("animation_points_lines", "Animation settings for points and lines", True, True, True),
 ]
 
 # ЗАДАНИЕ ЗНАЧЕНИЙ ПАРАМЕТРОВ ПО УМОЛЧАНИЮ
@@ -1187,7 +1193,7 @@ ttk.Label(root, text='Settings Random Walk', font=("Arial", 14)).pack(pady=2)
 # Блок создания фрейма для наполнения числовыми данными
 #-----------------------------------------------------------------------------------------------------------------------
 # Создание надписи для фрейма
-ttk.Label(root, text='Задание числовых данных', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
+ttk.Label(root, text='Numerical data', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
 frame = ttk.Frame(borderwidth=1, relief=SOLID, padding=[8, 10])
 frame.pack(anchor="nw", fill="x", padx=5)
 
@@ -1224,7 +1230,7 @@ line_var.trace_add("write", lambda *args: update_settings_frame())
 points_var.trace_add("write", lambda *args: update_settings_frame())
 
 # Создание надписи для фрейма
-ttk.Label(root, text='Вид графика', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
+ttk.Label(root, text='Type of graph', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
 frame = ttk.Frame(borderwidth=1, relief=SOLID, padding=[8, 10])
 frame.pack(anchor="nw", fill="x", padx=5)
 
@@ -1243,7 +1249,7 @@ mode_var = tk.StringVar(value='static')
 mode_var.trace_add("write", lambda *args:update_settings_frame())
 
 # Создание надписи для фрейма
-ttk.Label(root, text='Способ отображения', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
+ttk.Label(root, text='Display method', font=("Arial", 8)).pack(anchor='nw', pady=(10, 0))
 frame = ttk.Frame(borderwidth=1, relief=SOLID, padding=[8, 10])
 frame.pack(anchor="nw", fill="x", padx=5)
 
