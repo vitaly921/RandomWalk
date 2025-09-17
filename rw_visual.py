@@ -9,6 +9,8 @@ import matplotlib.animation as animation
 import matplotlib.colors as mcolors
 import numpy as np
 from matplotlib.patches import Arc
+#from net.visum_mapDistricts import highwaySinks1
+
 from metrics import MetricCheckBox
 from random_walk import RandomWalk
 
@@ -1064,8 +1066,39 @@ def create_metrics_frame(parent):
     """Функция создания динамического окна с метриками"""
     # Создание надписи для окна с метриками
     label = ttk.Label(parent, text="Selecting additional metrics", font=("Arial", 8))
+
+    # Создание внешнего фрейма, в который вложен Canvas и Scrollbar
+    container = ttk.Frame(parent, borderwidth=1, relief=SOLID)
+    # Задание фиксированной высоты контейнера
+    container.config(height=200)
+    # Запрет автоматическому подстраиванию фрейма по высоте содержимого
+    container.pack_propagate(False)
+
+    # Создание еще одного окна Canvas внутри контейнера
+    canvas = tk.Canvas(container, borderwidth=0, highlightthickness=0)
+    # Задание высоты и ширины Canvas как у контейнера
+    canvas.pack(side="left", fill="both", expand=True)
+
+    # Создание Scrollbar, прикрепленного к окну Canvas (при прокрутке сдвигается Canvas)
+    scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
+    # Создание связи между Scrollbar и Canvas (определение местоположения)
+    canvas.configure(yscrollcommand=scrollbar.set)
+
     # Создание динамического фрейма для метрик
-    frame = ttk.Frame(root, borderwidth=1, relief=SOLID, padding=[8, 10])
+    frame = ttk.Frame(canvas, padding=[8, 10])
+    # Прикрепление фрейма к Canvas для создания Scrollbar
+    canvas.create_window((0, 0), window=frame, anchor="nw")
+
+    def on_configure(event):
+        """Обработчик добавления новых метрик во фрейм"""
+        # Обновление области прокрутки для Canvas (bbox возвращает габариты фрейма со всеми метриками)
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    # Обработка события добавления новых метрик во фрейм
+    frame.bind("<Configure>", on_configure)
+
+
     # Создание переменной состояния для чек-бокса "Выбрать всё" для метрик
     all_check_metrics_var = tk.BooleanVar(value=False)
 
@@ -1128,13 +1161,13 @@ def create_metrics_frame(parent):
     all_check_metrics = ttk.Checkbutton(frame, text="Check all metrics", command=toggle_all_metrics,variable=all_check_metrics_var, style="Bold.TCheckbutton")
     all_check_metrics.grid(row=len(metrics_info), column=0, sticky="w", columnspan=5)
 
-    return label, frame, list(metrics_object_list)
+    return label, container, list(metrics_object_list)
 
 
 # Создание главного окна
 root = tk.Tk()
 root.title("Random walk")
-root.geometry("500x820+100+100")
+root.geometry("500x700+100+100")
 root.resizable(False, False)
 #icon = tk.PhotoImage(file='random_walk_icon.png')
 root.iconbitmap('random_walk.ico')
