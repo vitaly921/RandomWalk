@@ -67,7 +67,7 @@ def build_static_graph(metrics_object_list):
         create_window_for_figure(metrics_var, metrics_object_list, rw, fig, ax)
 
         # Создание заголовка в окне графика
-        plt.title("График случайного блуждания точек")
+        plt.title("A graph of a random walk")
         # Получение пользовательского значения размера точек
         size_points = int(points_size_var.get())
         # Получение пользовательского значения цветовой карты точек
