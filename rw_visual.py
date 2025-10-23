@@ -232,7 +232,7 @@ def build_animation(metrics_object_list):
                                                  True, interval=0, repeat=repeat_animation)
         animations.append(animation_line)
         # Установка заголовка для окна с анимацией
-        plt.title("Анимация линий")
+        plt.title("Animation lines")
 
     # Если выбрана анимация точек
     if points_var.get():
@@ -327,7 +327,7 @@ def build_animation(metrics_object_list):
         animations.append(animation_points)
 
         # Установка заголовка для окна с анимацией
-        plt.title('Анимация точек')
+        plt.title('Animation points')
 
     # Отображение выбранных окон
     plt.show()
@@ -435,8 +435,10 @@ def update_settings_frame():
 
     # Для случая выбора статичного отображения графика(-ов)
     if mode_var.get()=="static":
-        # Кнопка повтора анимации неактивная
+        # Кнопка повтора анимации неактивная и имеет значение False
         repeat_check.config(state="disabled")
+        repeat_var.set(False)
+
     else:
         # Кнопка повтора активна
         repeat_check.config(state="normal")
