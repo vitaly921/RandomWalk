@@ -6,7 +6,7 @@ Random walk Visualizer - программа для генерации и виз�
 Цель программы - создать интуитивный GUI на Tkinter с расширенными возможностями визуализации блкуждания через matplotlib,
 с системой метрик и анимацией, а также развить практические навыки в этой области языка программирования Python.
 
-# Key Features
+# ⚙️ Key Features
 ### 1. Интуитивно понятный графический интерфейс: :ok_hand:
 представляет собой удобное окно настроек для ввода пользователем параметров блуждания и его внешнего 
 вида вместо ручного редактирования кода;
@@ -44,6 +44,11 @@ Random walk Visualizer - программа для генерации и виз�
 <div align="center">
 <img src="images/visible_metrics.png" alt="setting_window" width=400" height="400" align="center"/>
 </div>
+
+# 🚀 Installation
+1. Клонируйте репозиторий
+2. Установите зависимости
+3. Запустите программу
 
 
 # How to Use
@@ -97,22 +102,43 @@ Random walk Visualizer - программа для генерации и виз�
 В зависимости от выбора настроек результат отображения может быть разным. Ниже в таблице указаны различные 
 сценарии отображения результатов:
 
-| Режим отображения | Повтор      | Метрики | Визуализация метрик | Результат                                                                                                             |
-|-------------------|-------------|---------|---------------------|-----------------------------------------------------------------------------------------------------------------------|
-| статика           | не доступен | нет     | не доступна         | <img src="images/simple_static.png" alt="setting_window" width="300" height="200" align="center"/>                    |
-| анимация          | нет         | нет     | не доступна         | <img src="images/simple_animation.gif" alt="setting_window" width="300" height="200" align="center"/>                 |
-| анимация          | да          | нет     | не доступна         | <img src="images/animation_repeating.gif" alt="setting_window" width="300" height="200" align="center"/>              |
-| статика           | не доступен | да      | нет                 | <img src="images/static_with_metrics.png" alt="setting_window" width="400" height="200" align="center"/>              |
-| статика           | не доступен | да      | да                  | <img src="images/static_with_visual_metrics.png" alt="setting_window" width="400" height="200" align="center"/>       |
-| анимация          | нет         | да      | нет                 | <img src="images/animation_with_metrics.gif" alt="setting_window" width="400" height="200" align="center"/>           |
-| анимация          | нет         | да      | да                  | <img src="images/animation_with_visual_metrics.gif" alt="setting_window" width="400" height="200" align="center"/>    |
-| анимация          | да          | да      | не доступна         | <img src="images/animation_repeating_with_metrics.gif" alt="setting_window" width="400" height="200" align="center"/> |
+| Режим отображения | Повтор | Метрики | Визуализация метрик | Результат                                                                                                             |
+|-------------------|:------:|:----:|:-------------------:|-----------------------------------------------------------------------------------------------------------------------|
+| статика           |    🔒    |   ❌   |          🔒           | <img src="images/simple_static.png" alt="setting_window" width="300" height="200" align="center"/>                    |
+| анимация          |   ❌    |   ❌   |          🔒           | <img src="images/simple_animation.gif" alt="setting_window" width="300" height="200" align="center"/>                 |
+| анимация          |   ✅    |   ❌   |          🔒           | <img src="images/animation_repeating.gif" alt="setting_window" width="300" height="200" align="center"/>              |
+| статика           |    🔒    |    ✅ |          ❌          | <img src="images/static_with_metrics.png" alt="setting_window" width="400" height="200" align="center"/>              |
+| статика           |    🔒    |    ✅ |          ✅          | <img src="images/static_with_visual_metrics.png" alt="setting_window" width="400" height="200" align="center"/>       |
+| анимация          |   ❌    |    ✅ |          ❌          | <img src="images/animation_with_metrics.gif" alt="setting_window" width="400" height="200" align="center"/>           |
+| анимация          |   ❌    |    ✅ |          ✅          | <img src="images/animation_with_visual_metrics.gif" alt="setting_window" width="400" height="200" align="center"/>    |
+| анимация          |   ✅    |    ✅ |          🔒           | <img src="images/animation_repeating_with_metrics.gif" alt="setting_window" width="400" height="200" align="center"/> |
 
     Важно! Результаты применимы для любого типа графика
 
-# Metrics
+# 📏 Metrics
 Добавить краткое описание каждой метрики (возможно в таблице со скринами и обозначениями линий на графике)
 В конце отметить что метрики можно добавлять то есть масштабирование
-# Используемые инструменты
+
+| Метрика                                         | Описание                                               |  Визуализация  | Обозначение |
+|-------------------------------------------------|--------------------------------------------------------|:--------------:|:----------:|
+| **The distance between the start and end points** | *Straight-line distance from initial to final position* |       ✅        |     etc    |
+| **The length of the random walk path**          | *Total trajectory length (sum of all steps)*           |       ❌        |      🔒      |
+| **Maximum distance between points**             | *Largest gap between any two consecutive points*       |       ✅        |            |
+| **The radius of wandering from the starting point** | *Maximum displacement from origin*                     |       ✅        |            |
+| **Center of mass**                              | *Average position of all points (centroid)*            |       ✅        |            |
+| **Number of repeat points**                     | *Count of revisited coordinates*                       |       ✅        |            |
+| **The angle between the start and end points**  | *Direction from start to end point (degrees)*          |       ✅        |            |
+| **Trajectory span radius**                      | *Radius of smallest circle containing entire path*     |       ✅        |            |
+| **Radius of wandering from the center of mass** | *Maximum distance from centroid*                       |       ✅        |            |
+| **The average square of movement**              | *Mean squared displacement from origin*                |       ❌        |      🔒      |
+| **The average direction of wandering**          | *Mean angle of movement vectors*                       |       ✅        |      🔒      |
+| **Average step length between points **         | *Mean distance between consecutive points*             |       ❌        |      🔒      |
+| **The effectiveness of wandering **             | *Net displacement divided by path length*              |       ❌        |      🔒      |
+| **Number of significant turns**                 | *Count of direction changes above threshold*           |       ❌        |      🔒      |
+| **Average angle of rotation**                   | *Mean change in direction between steps*               |       ❌        |      🔒      |
+
+
+# 🛠️ Используемые технологии
+
 # Отзывы
 
