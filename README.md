@@ -30,7 +30,7 @@ having to manually edit the code.
 <img src="images/colormap_dots.png" alt="setting_window" width="400" height="300" align="center"/>
 </div>
 
-- Display mode selection: *statistical* in the form of an image and *animation* visualizing the process of wandering
+- Display mode selection: *static* in the form of an image and *animation* visualizing the process of wandering
 <div align="center">
 <img src="images/animation_dots.gif" alt="setting_window" width="400" height="300" align="center"/>
 </div>
@@ -113,7 +113,7 @@ options:
 | Animation |   ❌    |    ✅ |          ✅          |     <img src="images/animation_with_visual_metrics.gif" alt="setting_window" width="400" height="200" align="center"/>     |
 | Animation |   ✅    |    ✅ |          🔒           |   <img src="images/animation_repeating_with_metrics.gif" alt="setting_window" width="400" height="200" align="center"/>    |
 
-    Please note! The results can be used for any type of graph.
+    Note: the results can be used for any type of graph.
 
 # 📏 Metrics
 
